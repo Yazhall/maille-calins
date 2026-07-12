@@ -1,0 +1,115 @@
+version: "3.9"
+
+services:
+    nginx:
+        image: nginx:alpine
+        container_name: maille_nginx
+        ports:
+            - "8080:80"
+        volumes:
+            - ./backend:/var/www/backend:ro
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+        depends_on:
+            - php
+        networks:
+            - maille_net
+
+    php:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        container_name: maille_php
+        volumes:
+            - ./backend:/var/www/backend
+        environment:
+            DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8"
+            MONGODB_URL: "mongodb://mongo:27017"
+            MONGODB_DB: "${MONGO_DB}"
+            MAILER_DSN: "smtp://mailhog:1025"
+            APP_ENV: dev
+        depends_on:
+            - postgres
+            - mongo
+        networks:
+            - maille_net
+
+    node:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: maille_node
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+        ports:
+            - "5173:5173"
+        command: npm run dev -- --host 0.0.0.0
+        networks:
+            - maille_net
+
+    postgres:
+        image: postgres:16-alpine
+        container_name: maille_postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        ports:
+            - "5432:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - maille_net
+
+    mongo:
+        image: mongo:7
+        container_name: maille_mongo
+        restart: unless-stopped
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongodata:/data/db
+        networks:
+            - maille_net
+
+    adminer:
+        image: adminer
+        container_name: maille_adminer
+        ports:
+            - "8081:8080"
+        depends_on:
+            - postgres
+        networks:
+            - maille_net
+
+    mongo-express:
+        image: mongo-express
+        container_name: maille_mongo_express
+        environment:
+            ME_CONFIG_MONGODB_SERVER: mongo
+            ME_CONFIG_BASICAUTH_USERNAME: admin
+            ME_CONFIG_BASICAUTH_PASSWORD: admin
+        ports:
+            - "8082:8081"
+        depends_on:
+            - mongo
+        networks:
+            - maille_net
+
+    mailhog:
+        image: mailhog/mailhog
+        container_name: maille_mailhog
+        ports:
+            - "1025:1025"
+            - "8025:8025"
+        networks:
+            - maille_net
+
+volumes:
+    pgdata:
+    mongodata:
+
+networks:
+    maille_net:
+        driver: bridge
