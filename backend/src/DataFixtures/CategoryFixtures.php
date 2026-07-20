@@ -6,6 +6,8 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Doctrine\ODM\MongoDB\MongoDBException;
 use Doctrine\Persistence\ObjectManager;
+use Throwable;
+
 class CategoryFixtures extends Fixture
 {
     public function __construct(private DocumentManager $documentManager)
@@ -15,7 +17,7 @@ class CategoryFixtures extends Fixture
 
     /**
      * @throws MongoDBException
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function load(ObjectManager $manager): void{
         $this->documentManager->getRepository(Category::class)->createQueryBuilder()
