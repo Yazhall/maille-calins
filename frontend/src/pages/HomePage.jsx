@@ -1,39 +1,75 @@
 import { useState, useEffect } from 'react'
-import { getMe } from '../api/authApi'
-import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { getCategories, getProducts } from '../api/catalogApi'
 
 function HomePage() {
-    const { logoutUser } = useAuth()
-    const navigate = useNavigate()
-    const [user, setUser] = useState(null)
+    const [categories, setCategories] = useState([])
+    const [products, setProducts] = useState([])
+    const [selectedCategoryId, setSelectedCategoryId] = useState(null)
     const [error, setError] = useState(null)
-
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        async function fetchUser() {
+        async function fetchCategories() {
             try {
-                const data = await getMe()
-                setUser(data)
+                const data = await getCategories()
+                setCategories(data)
             } catch (err) {
-                setError('Impossible de récupérer tes informations.')
+                setError('Impossible de charger les catégories.')
             }
         }
-        fetchUser()
+
+        fetchCategories()
     }, [])
 
-    if (error) {
-        return <p style={{ color: 'red' }}>{error}</p>
-    }
+    useEffect(() => {
+        async function fetchProducts() {
+            setLoading(true)
+            try {
+                const data = await getProducts(selectedCategoryId)
+                setProducts(data)
+            } catch (err) {
+                setError('Impossible de charger les produits.')
+            } finally {
+                setLoading(false)
+            }
+        }
 
-    if (!user) {
-        return <p>Chargement...</p>
-    }
+        fetchProducts()
+    }, [selectedCategoryId])
 
     return (
         <div>
-            <h1>Vous êtes connecté, {user.firstName} {user.lastName} !</h1>
-            <button onClick={() => { logoutUser(); navigate('/login') }}>Se déconnecter</button>
+            <h1>Maille & Câlins</h1>
+
+            <nav>
+                <button onClick={() => setSelectedCategoryId(null)}>
+                    Tous les produits
+                </button>
+                {categories.map((category) => (
+                    <button
+                        key={category.id}
+                        onClick={() => setSelectedCategoryId(category.id)}
+                    >
+                        {category.name}
+                    </button>
+                ))}
+            </nav>
+
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+
+            {loading ? (
+                <p>Chargement des produits...</p>
+            ) : (
+                <ul>
+                    {products.map((product) => (
+                        <li key={product.id}>
+                            <h2>{product.name}</h2>
+                            <p>{product.price} €</p>
+                            <p>Stock : {product.stock}</p>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     )
 }
