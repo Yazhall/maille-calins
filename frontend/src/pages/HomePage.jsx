@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getCategories, getProducts } from '../api/catalogApi'
-
+import { Link } from 'react-router-dom'
 function HomePage() {
     const [categories, setCategories] = useState([])
     const [products, setProducts] = useState([])
@@ -63,7 +63,9 @@ function HomePage() {
                 <ul>
                     {products.map((product) => (
                         <li key={product.id}>
-                            <h2>{product.name}</h2>
+                            <Link to={`/products/${product.slug}`}>
+                                <h2>{product.name}</h2>
+                            </Link>
                             <p>{product.price} €</p>
                             <p>Stock : {product.stock}</p>
                         </li>

@@ -3,6 +3,7 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import HomePage from "./pages/HomePage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
+import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
+            <Route path="/products/:slug" element={<ProductDetailPage />} />
         </Routes>
       </BrowserRouter>
   )
