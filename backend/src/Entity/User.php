@@ -62,6 +62,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer')]
     private Collection $orders;
 
+    #[ORM\OneToOne(mappedBy: 'owner', cascade: ['persist', 'remove'])]
+    private ?Cart $cart = null;
+
     public function __construct(){
 
         $this->id=Uuid::v7();
@@ -272,5 +275,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // Rien à effacer ici, on ne stocke jamais de mot de passe en clair sur l'entité
+    }
+
+    public function getCart(): ?Cart
+    {
+        return $this->cart;
+    }
+
+    public function setCart(Cart $cart): static
+    {
+        // set the owning side of the relation if necessary
+        if ($cart->getOwner() !== $this) {
+            $cart->setOwner($this);
+        }
+
+        $this->cart = $cart;
+
+        return $this;
     }
 }
