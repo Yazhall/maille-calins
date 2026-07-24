@@ -5,9 +5,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 class AddCartItemDto
 {
     #[Assert\NotBlank]
-    private string $productId = '';
+    public string $productId = '';
     #[Assert\NotBlank]
     #[Assert\Positive]
-    private int $quantity = 1;
+    public int $quantity = 1;
 
 }
