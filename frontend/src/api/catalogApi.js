@@ -14,3 +14,8 @@ export async function getProductBySlug(slug) {
     const response = await apiClient.get(`/products/${slug}`)
     return response.data
 }
+
+export async function getProductById(id){
+    const response = await apiClient.get(`/products/by-id/${id}`)
+    return response.data
+}
