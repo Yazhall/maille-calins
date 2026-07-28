@@ -15,11 +15,8 @@ readonly class AddressService
 
     ){}
     public function setDefaultAddress(User $user,string $addressId): Address{
-        $address = $this->addressRepository->findOneBy(['id'=> $addressId, 'owner'=>$user]);
+        $address = $this->findOwnedAddressOrFail($user, $addressId);
 
-        if ($address === null){
-            throw new InvalidArgumentException('Cette Address n\'existe pas');
-        }
         $currentDefault = $this->addressRepository->findBy(['owner'=>$user, 'isDefault'=>true]);
         foreach ($currentDefault as $addres){
             $addres->setIsDefault(false);
@@ -62,13 +59,31 @@ readonly class AddressService
     }
 
     public function deactivateAddress(User $user, string $addressId): void{
-       $address=  $this->addressRepository->findOneBy(['id'=> $addressId, 'owner'=>$user]);
+       $address = $this->findOwnedAddressOrFail($user, $addressId);
 
-       if ($address === null){
-           throw new InvalidArgumentException('Cette Address n\'existe pas');
-       }
        $address->setIsActive(false);
        $this->entityManager->flush();
+    }
+
+    public function findDefaultAddress(User $user): ?Address{
+
+        return $this->addressRepository->findOneBy(['owner'=>$user, 'isDefault'=>true]);
+
+    }
+
+    private function findOwnedAddressOrFail(User $user, string $addressId): Address
+    {
+        $address = $this->addressRepository->findOneBy(['id' => $addressId, 'owner' => $user]);
+
+        if ($address === null) {
+            throw new InvalidArgumentException('Cette Address n\'existe pas');
+        }
+
+        return $address;
+    }
+
+    public function getAddress(User $user, string $addressId): Address{
+        return $this->findOwnedAddressOrFail($user,$addressId);
     }
 
 

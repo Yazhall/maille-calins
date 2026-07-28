@@ -100,6 +100,12 @@ readonly class CartService
 
         }
 
+        public function clearCart(User $user): void{
+        $cart = $this->getOrCreateCart($user);
+        $cart->getCartItems()->clear();
+        $this->entityManager->flush();
+        }
+
 
 
 
