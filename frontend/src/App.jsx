@@ -5,6 +5,8 @@ import HomePage from "./pages/HomePage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
 import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
+import OrderDetailPage from "./pages/OrderDetailPage.jsx";
+import OrderHistoryPage from "./pages/OrderHistoryPage.jsx";
 
 function App() {
   return (
@@ -14,7 +16,9 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
+            <Route path="/orders/:id" element={<OrderDetailPage/>}/>
             <Route path="/cart" element={<CartPage/>}/>
+            <Route path="/orders" element={<OrderHistoryPage/>}/>
             <Route path="/products/:slug" element={<ProductDetailPage />} />
         </Routes>
       </BrowserRouter>
