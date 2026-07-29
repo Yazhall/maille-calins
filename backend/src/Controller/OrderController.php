@@ -28,6 +28,7 @@ public function createOrder(
         Request $request,
 
 
+
     ): JsonResponse{
         /** @var User $user */
     $user = $this->getUser();
@@ -61,6 +62,40 @@ private function formatOrder(Order $order): array{
             'createdAt' => $order->getCreatedAt()->format('Y-m-d H:i:s'),
         ];
 }
+
+    #[Route('/api/orders', name: 'api_order_list', methods: ['GET'])]
+    public function listOrder(
+        OrderService $orderService,
+    ): JsonResponse{
+        /** @var User $user */
+        $user = $this->getUser();
+
+
+        $orders = $orderService->listOrders($user);
+        $data = array_map(
+            fn (Order $data) => $this->formatOrder($data),
+            $orders
+        );
+        return $this->json($data, 200);
+
+    }
+    #[Route('/api/orders/{id}', name: 'api_order_detail', methods: ['GET'])]
+    public function orderDetail(
+        string $id,
+        OrderService $orderService,
+        ): JsonResponse{
+        /** @var User $user */
+        $user = $this->getUser();
+        try{
+            $order = $orderService->getOrderDetail($user,$id);
+        }catch(InvalidArgumentException $exception){
+            return $this->json(['error' => $exception->getMessage()], 404);
+        }
+        $data = $this->formatOrder($order);
+        return $this->json($data, 200);
+
+    }
+
 
 
 

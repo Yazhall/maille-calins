@@ -6,10 +6,12 @@ use App\Entity\OrderItem;
 use App\Entity\Address;
 use App\Entity\Payment;
 use App\Service\PaymentService;
+use App\Repository\OrderRepository;
 use App\Entity\User;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
+
 use Throwable;
 
 readonly class OrderService
@@ -21,6 +23,7 @@ readonly class OrderService
         private CartService            $cartService,
         private ProductService         $productService,
         private PaymentService         $paymentService,
+        private OrderRepository        $orderRepository,
     ){
     }
 
@@ -88,8 +91,20 @@ readonly class OrderService
             throw new InvalidArgumentException('Aucune address enregister');
         }
         return $currentAddress;
+    }
+    public function listOrders(User $user): array
+    {
+        return $this->orderRepository->findBy(['customer'=>$user ],['createdAt'=>'DESC']);
 
 
     }
+    public function getOrderDetail(User $user, string $orderId): Order{
 
+        $orderdetail = $this->orderRepository->findOneBy(['customer'=>$user,'id'=>$orderId ]);
+
+        if ($orderdetail === null){
+            throw new InvalidArgumentException('cette commande n\'existe pas');
+        }
+        return $orderdetail;
+    }
 }
