@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { getProductById } from '../api/catalogApi.js';
+import { createOrder } from '../api/orderApi.js';
 
 export default function CartPage() {
-    const { cart, updateItem, removeItem } = useCart();
+    const { cart, updateItem, removeItem, refreshCart } = useCart();
     const [products, setProducts] = useState({});
+    const [orderError, setOrderError] = useState(null);
+    const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!cart) return;
@@ -57,6 +62,21 @@ export default function CartPage() {
         }
     }
 
+    async function handlePlaceOrder() {
+        setOrderError(null);
+        setIsPlacingOrder(true);
+        try {
+            const order = await createOrder(null, null);
+            await refreshCart();
+            navigate(`/orders/${order.id}`);
+        } catch (error) {
+            console.error('Erreur lors de la commande', error);
+            setOrderError(error.response?.data?.error || 'Erreur lors de la commande.');
+        } finally {
+            setIsPlacingOrder(false);
+        }
+    }
+
     return (
         <div>
             <h1>Mon panier</h1>
@@ -81,6 +101,12 @@ export default function CartPage() {
                 })}
             </ul>
             <p>Total : {total.toFixed(2)} €</p>
+
+            <button onClick={handlePlaceOrder} disabled={isPlacingOrder}>
+                {isPlacingOrder ? 'Commande en cours...' : 'Passer commande'}
+            </button>
+
+            {orderError && <p style={{ color: 'red' }}>{orderError}</p>}
         </div>
     );
 }
