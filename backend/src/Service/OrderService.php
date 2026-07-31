@@ -4,14 +4,11 @@ namespace App\Service;
 use App\Entity\Order;
 use App\Entity\OrderItem;
 use App\Entity\Address;
-use App\Entity\Payment;
-use App\Service\PaymentService;
 use App\Repository\OrderRepository;
 use App\Entity\User;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
-
 use Throwable;
 
 readonly class OrderService
@@ -107,4 +104,18 @@ readonly class OrderService
         }
         return $orderdetail;
     }
+
+    public function hasUserPurchasedProduct(User $user, string $productId): bool{
+        $orders = $this->listOrders($user);
+        foreach ($orders as $order){
+            foreach ($order->getOrderItems() as $orderItem){
+                if ($orderItem->getProductId() === $productId){
+                    return true;
+                }
+
+            }
+        }
+        return false;
+    }
+
 }
