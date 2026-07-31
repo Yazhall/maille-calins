@@ -50,6 +50,7 @@ security:
             - { path: ^/api/cart, roles: IS_AUTHENTICATED_FULLY }
             - { path: ^/api/addresses, roles: IS_AUTHENTICATED_FULLY}
             - {path: ^/api/orders, roles: IS_AUTHENTICATED_FULLY }
+            - {path: ^/api/wishlist, roles: IS_AUTHENTICATED_FULLY }
             - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
         # - { path: ^/admin, roles: ROLE_ADMIN }
