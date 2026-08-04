@@ -11,9 +11,9 @@ class CreateProductDto
     #[Assert\NotBlank]
     public string $description = '';
     #[Assert\NotBlank]
+    public string $image = '';
+    #[Assert\NotBlank]
     public float $price=0.0;
-
-
     public int $stock=0;
     #[Assert\NotBlank]
     public string $status ='';

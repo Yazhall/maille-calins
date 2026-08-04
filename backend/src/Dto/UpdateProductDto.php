@@ -14,6 +14,8 @@ class UpdateProductDto
 
     public ?float $price= null;
 
+    public ?string $image= null;
+
 
     public ?int $stock= null;
 
