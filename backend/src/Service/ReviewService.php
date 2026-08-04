@@ -5,6 +5,8 @@ use App\Entity\User;
 use App\Document\Review;
 use DateTimeImmutable;
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Doctrine\ODM\MongoDB\LockException;
+use Doctrine\ODM\MongoDB\Mapping\MappingException;
 use Doctrine\ODM\MongoDB\MongoDBException;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
@@ -51,6 +53,25 @@ readonly class ReviewService
 
     public function listReviewsByProduct(string $productId): array{
         return  $this->documentManager->getRepository(Review::class)->findBy(['productId' => $productId,'status' => 'published']);
+    }
+
+    public function listPendingReviews():array{
+        return $this->documentManager->getRepository(Review::class)->findBy(['status' => 'pending']);
+    }
+
+    /**
+     * @throws MappingException
+     * @throws LockException
+     */
+    public function moderateReview(string $reviewId, string $status): Review{
+        $review = $this->documentManager->getRepository(Review::class)->find($reviewId);
+        if ($review === null){
+            throw new InvalidArgumentException("review n\'existe pas");
+        }
+        $review->setStatus($status);
+        $this->documentManager->persist($review);
+        $this->documentManager->flush();
+        return $review;
     }
 
 
