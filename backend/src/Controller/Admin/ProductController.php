@@ -10,6 +10,8 @@ use Doctrine\ODM\MongoDB\LockException;
 use Doctrine\ODM\MongoDB\Mapping\MappingException;
 use Doctrine\ODM\MongoDB\MongoDBException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -46,6 +48,7 @@ class ProductController extends AbstractController
         $product->setName($createProductDto->name);
         $product->setSlug($createProductDto->slug);
         $product->setDescription($createProductDto->description);
+        $product->setImage($createProductDto->image);
         $product->setPrice($createProductDto->price);
         $product->setStock($createProductDto->stock);
         $product->setStatus($createProductDto->status);
@@ -60,6 +63,7 @@ class ProductController extends AbstractController
             'name'=>$product->getName(),
             'slug'=>$product->getSlug(),
             'description'=>$product->getDescription(),
+            'image'=>$product->getImage(),
             'price'=>$product->getPrice(),
             'stock'=>$product->getStock(),
             'status'=>$product->getStatus(),
@@ -105,6 +109,9 @@ class ProductController extends AbstractController
         if ($updateProductDto->description !== null){
             $productAtModify->setDescription($updateProductDto->description);
         }
+        if ($updateProductDto->image !== null){
+            $productAtModify->setImage($updateProductDto->image);
+        }
         if ($updateProductDto->price !== null){
             $productAtModify->setPrice($updateProductDto->price);
         }
@@ -125,6 +132,7 @@ class ProductController extends AbstractController
             'name'=>$productAtModify->getName(),
             'slug'=>$productAtModify->getSlug(),
             'description'=>$productAtModify->getDescription(),
+            'image'=>$productAtModify->getImage(),
             'price'=>$productAtModify->getPrice(),
             'stock'=>$productAtModify->getStock(),
             'status'=>$productAtModify->getStatus(),
@@ -152,6 +160,52 @@ class ProductController extends AbstractController
         $documentManager->remove($productAtDelete);
         $documentManager->flush();
         return new Response(null, 204);
+    }
+
+    /**
+     * @throws Throwable
+     * @throws MappingException
+     * @throws MongoDBException
+     * @throws LockException
+     */
+    #[Route('/api/admin/products/{id}/image', name: 'api_products_post_image', methods: ['POST'])]
+    public function UploadImageProduct(
+        string $id,
+        Request $request,
+        DocumentManager $documentManager,
+        #[Autowire('%kernel.project_dir%')] string $projectDir,
+    ):JsonResponse{
+        $product = $documentManager->getRepository(Product::class)->find($id);
+
+        if ($product==null){
+            return $this->json(['errors'=>'Ce Produit n\'existe pas '],404);
+        }
+        $image = $request->files->get('image');
+
+        if ($image==null){
+            return $this->json(['errors'=>'le corps de la requete est invalide '],400);
+        }
+        $newFilename = $id.'-'.time().'.'.$image->guessExtension();
+        $destinationPath = "{$projectDir}/public/uploads/products";
+        $image->move($destinationPath, $newFilename);
+        $product->setImage('/uploads/products/' . $newFilename);
+        $documentManager->persist($product);
+        $documentManager->flush();
+        return $this->json([
+            'id'=>$product->getId(),
+            'name'=>$product->getName(),
+            'slug'=>$product->getSlug(),
+            'description'=>$product->getDescription(),
+            'image'=>$product->getImage(),
+            'price'=>$product->getPrice(),
+            'stock'=>$product->getStock(),
+            'status'=>$product->getStatus(),
+            'categoryIds'=>$product->getCategoryIds(),
+            'createdAt'=>$product->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt'=>$product->getUpdatedAt()->format('Y-m-d H:i:s'),
+
+        ]);
+
     }
 
 

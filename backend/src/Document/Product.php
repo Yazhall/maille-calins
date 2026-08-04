@@ -17,6 +17,8 @@ class Product
     private ?float $price = null;
     #[MongoDB\Field(name: "description", type: "string")]
     private ?string $description = null;
+    #[MongoDB\Field(name: "image", type: "string")]
+    private  ?string $image = null ;
     #[MongoDB\Field(name: "status", type: "string")]
     private ?string $status = null;
     #[MongoDB\Field(name: "stock", type: "int")]
@@ -31,8 +33,20 @@ class Product
     private float $ratingAverage = 0.0;
     #[MongoDB\Field(name: "ratingCount", type: "int")]
     private int $ratingCount = 0;
+
     public function getId(): ?string{
         return $this->id;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): self
+    {
+        $this->image = $image;
+        return $this;
     }
 
     public function getName(): ?string
