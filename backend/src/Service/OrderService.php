@@ -3,11 +3,13 @@
 namespace App\Service;
 use App\Entity\Order;
 use App\Entity\OrderItem;
+use App\Document\Product;
 use App\Entity\Address;
 use App\Repository\OrderRepository;
 use App\Entity\User;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ODM\MongoDB\DocumentManager;
 use InvalidArgumentException;
 use Throwable;
 
@@ -16,6 +18,7 @@ readonly class OrderService
 
     public function __construct(
         private EntityManagerInterface $entityManager,
+        private DocumentManager $documentManager,
         private AddressService         $addressService,
         private CartService            $cartService,
         private ProductService         $productService,
@@ -54,8 +57,12 @@ readonly class OrderService
         foreach ($cart->getCartItems() as $item){
            $product= $this->productService->findById($item->getProductId());
             if ($product == null){
-                throw new InvalidArgumentException('Item not found');
+                throw new InvalidArgumentException('produit introuvable');
             }
+            if ($item->getQuantity() > $product->getStock()){
+                throw new InvalidArgumentException("vous ne pouvait pas ajouter {$item->getQuantity()}  car il le stock dispo est de {$product->getStock()} ");
+            }
+            $product->setStock($product->getStock() - $item->getQuantity());
             $orderItem = new OrderItem();
             $orderItem->setProductId($product->getId());
             $orderItem->setQuantity($item->getQuantity());
@@ -64,6 +71,7 @@ readonly class OrderService
             $orderItem->setProductPriceSnapshot((string)$product->getPrice());
             $this->entityManager->persist($orderItem);
             $totalAmount += $item->getQuantity() * $product->getPrice();
+            $this->documentManager->persist($product);
         }
         $order->setTotalAmount((string)$totalAmount);
         $this->entityManager->persist($order);
@@ -71,6 +79,7 @@ readonly class OrderService
 
         $this ->cartService->clearCart($user);
         $this->entityManager->flush();
+        $this->documentManager->flush();
 
         return $order;
         });
