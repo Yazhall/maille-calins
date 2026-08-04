@@ -5,6 +5,7 @@ use App\Entity\Order;
 use App\Entity\OrderItem;
 use App\Document\Product;
 use App\Entity\Address;
+use App\Repository\OrderItemRepository;
 use App\Repository\OrderRepository;
 use App\Entity\User;
 use DateTimeImmutable;
@@ -24,6 +25,7 @@ readonly class OrderService
         private ProductService         $productService,
         private PaymentService         $paymentService,
         private OrderRepository        $orderRepository,
+
     ){
     }
 
@@ -104,6 +106,12 @@ readonly class OrderService
 
 
     }
+    public function listAllOrders(): array
+    {
+        return $this->orderRepository->findBy([],['createdAt'=>'ASC']);
+
+
+    }
     public function getOrderDetail(User $user, string $orderId): Order{
 
         $orderdetail = $this->orderRepository->findOneBy(['customer'=>$user,'id'=>$orderId ]);
@@ -125,6 +133,17 @@ readonly class OrderService
             }
         }
         return false;
+    }
+    public function updateOrderStatus(string $orderId, string $status, ): Order{
+    $orderAtModify = $this->orderRepository->findOneBy(['id' => $orderId]);
+    if ($orderAtModify == null){
+        throw new InvalidArgumentException('cette commande n\'existe pas');
+    }
+    $orderAtModify->setStatus($status);
+    $orderAtModify->setUpdatedAt(new DateTimeImmutable());
+    $this->entityManager->flush();
+    return $orderAtModify;
+
     }
 
 }
