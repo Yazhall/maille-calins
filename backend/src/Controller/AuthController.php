@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -38,6 +39,30 @@ class AuthController extends AbstractController
             'id' => (string) $user->getId(),
             'email' => $user->getEmail(),
         ], 201);
+
+    }
+
+    #[Route('/api/verify-email', name: 'api_verify_email', methods: ['GET'])]
+    public function emailVerifyAccount(
+        Request $request,
+        UserRegistrationService $userRegistrationService,
+    ): JsonResponse
+    {
+        $token = $request->query->get('token');
+        if (empty($token)) {
+            return $this->json(['errors' => ["token invalide"]], 400);
+        }
+        try{
+            $user = $userRegistrationService->verifyEmail($token);
+        }catch (InvalidArgumentException ){
+            return $this->json(['errors' => ['le token ne correspond à aucun utilisateur']], 400);
+        }
+
+        return $this->json([
+            'email' => $user->getEmail(),
+            'message'=> 'le compte a bien etait vérifié'
+
+        ]);
 
     }
 
