@@ -10,7 +10,6 @@ class CreateProductDto
     public string $slug='';
     #[Assert\NotBlank]
     public string $description = '';
-    #[Assert\NotBlank]
     public string $image = '';
     #[Assert\NotBlank]
     public float $price=0.0;

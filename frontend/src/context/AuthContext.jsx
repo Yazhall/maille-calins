@@ -2,22 +2,37 @@ import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
+function decodeRoles(token) {
+    if (!token) return [];
+    try {
+        const payload = token.split('.')[1];
+        const decoded = JSON.parse(atob(payload));
+        return decoded.roles || [];
+    } catch (error) {
+        return [];
+    }
+}
+
 export function AuthProvider({ children }) {
-    const [token, setToken] = useState(localStorage.getItem('token')); // on met direct le token dans localStorage pour garder l'utilisateur connecté meme s'il fait F5
+    const [token, setToken] = useState(localStorage.getItem('token'));
+    const [roles, setRoles] = useState(decodeRoles(localStorage.getItem('token')));
 
     function loginUser(newToken) {
         localStorage.setItem('token', newToken);
         setToken(newToken);
+        setRoles(decodeRoles(newToken));
     }
 
     function logoutUser() {
         localStorage.removeItem('token');
         setToken(null);
+        setRoles([]);
     }
 
     const value = {
         token,
         isAuthenticated: !!token,
+        isAdmin: roles.includes('ROLE_ADMIN'),
         loginUser,
         logoutUser,
     };
@@ -25,6 +40,6 @@ export function AuthProvider({ children }) {
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {   // pour ne pas avoir à écrire useContext(AuthContext) à chaque fois dans chaque composant.
+export function useAuth() {
     return useContext(AuthContext);
 }
