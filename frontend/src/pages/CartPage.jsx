@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Trash2, Minus, Plus, ImageIcon } from 'lucide-react';
 import { useCart } from '../context/CartContext.jsx';
 import { getProductById } from '../api/catalogApi.js';
-import { createOrder } from '../api/orderApi.js';
+import { getImageUrl } from '../utils/imageUrl.js';
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 import Button from '../components/Button.jsx';
@@ -21,7 +21,7 @@ function CartItemRow({ item, product, onQuantityChange, onRemove }) {
         <div className="flex items-center gap-4 bg-creme rounded-xl p-4">
             <div className="w-16 h-16 bg-rose-poudre rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
                 {product?.image ? (
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    <img src={getImageUrl(product.image)} alt={product.name} className="w-full h-full object-cover" />
                 ) : (
                     <ImageIcon className="w-6 h-6 text-brun-gris" strokeWidth={1.2} />
                 )}
@@ -96,8 +96,8 @@ function OrderSummary({ total, onCheckout, isPlacingOrder, error }) {
 export default function CartPage() {
     const { cart, updateItem, removeItem, refreshCart } = useCart();
     const [products, setProducts] = useState({});
-    const [orderError, setOrderError] = useState(null);
-    const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const [orderError] = useState(null);
+    const [isPlacingOrder] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -154,20 +154,8 @@ export default function CartPage() {
         }
     }
 
-    async function handlePlaceOrder() {
-        setOrderError(null);
-        setIsPlacingOrder(true);
-        try {
-            const order = await createOrder(null, null);
-            await refreshCart();
-            navigate(`/orders/${order.id}`);
-        } catch (error) {
-            setOrderError(
-                error.response?.data?.error || 'Erreur lors de la commande.'
-            );
-        } finally {
-            setIsPlacingOrder(false);
-        }
+    function handlePlaceOrder() {
+        navigate('/commande');
     }
 
     return (

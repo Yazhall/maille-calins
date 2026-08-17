@@ -14,9 +14,9 @@ const NAV_LINKS = [
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { itemCount } = useCart();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isAdmin } = useAuth();
 
-    const accountLink = isAuthenticated ? '/account' : '/login';
+    const accountLink = isAdmin ? '/admin' : isAuthenticated ? '/account' : '/login';
 
     return (
         <>

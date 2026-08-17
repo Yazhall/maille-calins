@@ -7,7 +7,7 @@ import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 import Button from '../components/Button.jsx';
 import ProductCard from '../components/ProductCard.jsx';
-
+import { getImageUrl } from '../utils/imageUrl.js';
 function AnnounceBar() {
     return (
         <div className="bg-noir-chaud text-blanc text-center py-2 px-4">
@@ -21,7 +21,7 @@ function Gallery({ image, name }) {
         <div className="flex-1">
             <div className="w-full aspect-square bg-blanc rounded-xl flex items-center justify-center">
                 {image ? (
-                    <img src={image} alt={name} className="w-full h-full object-cover rounded-xl" />
+                    <img src={getImageUrl(image)} alt={name} className="w-full h-full object-cover rounded-xl" />
                 ) : (
                     <ImageIcon className="w-12 h-12 text-brun-gris" strokeWidth={1.2} />
                 )}
@@ -33,7 +33,7 @@ function Gallery({ image, name }) {
                         className="w-14 h-14 bg-blanc rounded-lg border border-[#E8DDD0] flex items-center justify-center"
                     >
                         {image ? (
-                            <img src={image} alt="" className="w-full h-full object-cover rounded-lg" />
+                            <img src={getImageUrl(image)} alt="" className="w-full h-full object-cover rounded-lg" />
                         ) : (
                             <ImageIcon className="w-5 h-5 text-brun-gris" strokeWidth={1.2} />
                         )}
