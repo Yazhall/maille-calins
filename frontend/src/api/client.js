@@ -15,4 +15,15 @@ apiClient.interceptors.request.use((config) => {
     return config;
 });
 
+// AJOUTE CECI : nettoie le token périmé/invalide dès qu'un 401 arrive
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default apiClient;

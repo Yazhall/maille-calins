@@ -17,13 +17,18 @@ export function CartProvider({children}){
     }}
     , [isAuthenticated]);
 
-    async function refreshCart(){
-        try{const data = await getCart();
-            setCart(data)
-        }catch (error) {
-            console.error('Erreur lors du chargement du panier', error)
+    async function refreshCart() {
+        try {
+            const data = await getCart();
+            setCart(data);
+        } catch (error) {
+            if (error.response?.status === 401) {
+                // Pas connecté = panier vide, ce n'est pas une erreur
+                setCart({ items: [] });
+            } else {
+                console.error('Erreur lors du chargement du panier', error);
+            }
         }
-
     }
 
     async function addItem(produtId, quanity){

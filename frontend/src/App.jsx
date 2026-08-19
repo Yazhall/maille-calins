@@ -34,7 +34,6 @@ function App() {
             <Route path="/admin/categories" element={<AdminRoute> <AdminCategoriesPage /> </AdminRoute>} />
             <Route path="/admin/commandes" element={<AdminRoute> <AdminOrdersPage /> </AdminRoute>} />
             <Route path="/admin/avis" element={<AdminRoute> <AdminReviewsPage /> </AdminRoute>} />
-
         </Routes>
       </BrowserRouter>
   )
