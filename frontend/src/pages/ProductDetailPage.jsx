@@ -233,6 +233,7 @@ export default function ProductDetailPage() {
                         {relatedProducts.map((related) => (
                             <Link key={related.id} to={`/products/${related.slug}`}>
                                 <ProductCard
+                                    image={related.image ? getImageUrl(related.image) : null}
                                     name={related.name}
                                     details="15 cm · Pièce unique"
                                     price={`${related.price.toFixed(2)} €`}
