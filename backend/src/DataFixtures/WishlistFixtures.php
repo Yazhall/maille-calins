@@ -33,11 +33,12 @@ class WishlistFixtures extends Fixture implements DependentFixtureInterface
 
         $products = $this->documentManager->getRepository(Product::class)->findAll();
 
-        $user0 = $this->getReference('user_0', User::class);
-        $user1 = $this->getReference('user_1', User::class);
+        $userRefs = ['user_0', 'user_1', 'user_3', 'user_4', 'user_5', 'user_6', 'user_7', 'user_8', 'user_9', 'user_10'];
 
-        foreach ([$user0, $user1] as $user){
-            $randomProducts = (array) array_rand($products, 2);
+        foreach ($userRefs as $userRef) {
+            $user = $this->getReference($userRef, User::class);
+            $itemCount = random_int(2, 3);
+            $randomProducts = (array) array_rand($products, $itemCount);
             $productsIds = array_map(
                 fn(int $index) => (string) $products[$index]->getId(),
                 $randomProducts

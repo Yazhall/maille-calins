@@ -12,7 +12,6 @@ const EMPTY_FORM = {
     slug: '',
     description: '',
     order: 0,
-    image: '',
 };
 
 function CategoryRow({ category, onEdit, onDelete }) {
@@ -41,6 +40,8 @@ function CategoryRow({ category, onEdit, onDelete }) {
 
 function CategoryForm({ editingCategory, onSaved, onCancel }) {
     const [form, setForm] = useState(EMPTY_FORM);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,15 +52,32 @@ function CategoryForm({ editingCategory, onSaved, onCancel }) {
                 slug: editingCategory.slug,
                 description: editingCategory.description,
                 order: editingCategory.order,
-                image: editingCategory.image || '',
             });
+            setImagePreview(editingCategory.image ? getImageUrl(editingCategory.image) : null);
         } else {
             setForm(EMPTY_FORM);
+            setImagePreview(null);
         }
+        setImageFile(null);
     }, [editingCategory]);
 
     function handleChange(field, value) {
         setForm((current) => ({ ...current, [field]: value }));
+    }
+
+    function handleImageChange(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    }
+
+    async function uploadImage(categoryId) {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        await apiClient.post(`/admin/categories/${categoryId}/image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
     }
 
     async function handleSubmit(e) {
@@ -69,11 +87,19 @@ function CategoryForm({ editingCategory, onSaved, onCancel }) {
 
         try {
             const payload = { ...form, order: parseInt(form.order, 10) };
+            let categoryId = editingCategory?.id;
+
             if (editingCategory) {
                 await apiClient.patch(`/admin/categories/${editingCategory.id}`, payload);
             } else {
-                await apiClient.post('/admin/categories', payload);
+                const response = await apiClient.post('/admin/categories', payload);
+                categoryId = response.data.id;
             }
+
+            if (imageFile && categoryId) {
+                await uploadImage(categoryId);
+            }
+
             onSaved();
         } catch (err) {
             setError(err.response?.data?.errors || "Erreur lors de l'enregistrement.");
@@ -104,11 +130,26 @@ function CategoryForm({ editingCategory, onSaved, onCancel }) {
                 value={form.order}
                 onChange={(e) => handleChange('order', e.target.value)}
             />
-            <Input
-                placeholder="URL de l'image (optionnel)"
-                value={form.image}
-                onChange={(e) => handleChange('image', e.target.value)}
-            />
+
+            <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-creme rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                    {imagePreview ? (
+                        <img src={imagePreview} alt="Aperçu" className="w-full h-full object-cover" />
+                    ) : (
+                        <ImageIcon className="w-5 h-5 text-brun-gris" strokeWidth={1.2} />
+                    )}
+                </div>
+                <label className="font-body text-body-sm text-noir-chaud">
+                    <span className="block mb-1">Image de la catégorie</span>
+                    <input type="file" accept="image/*" onChange={handleImageChange} />
+                </label>
+            </div>
+
+            {!editingCategory && (
+                <p className="font-body text-body-sm text-brun-gris">
+                    L'image sera envoyée juste après la création de la catégorie.
+                </p>
+            )}
 
             <div className="flex gap-3">
                 <Button variant="primary" type="submit" disabled={isSubmitting}>

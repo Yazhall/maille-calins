@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getCategories, getProducts } from '../api/catalogApi';
+import { getImageUrl } from '../utils/imageUrl.js';
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 import ProductCard from '../components/ProductCard.jsx';
@@ -176,6 +177,7 @@ export default function BoutiquePage() {
                                 {visibleProducts.map((product) => (
                                     <Link key={product.id} to={`/products/${product.slug}`}>
                                         <ProductCard
+                                            image={product.image ? getImageUrl(product.image) : null}
                                             name={product.name}
                                             details="15 cm · Pièce unique"
                                             price={`${product.price.toFixed(2)} €`}

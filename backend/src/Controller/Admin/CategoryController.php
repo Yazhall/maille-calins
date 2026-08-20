@@ -17,6 +17,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 
 #[IsGranted('ROLE_ADMIN')]
@@ -132,5 +133,45 @@ class CategoryController extends AbstractController
         $documentManager->remove($categoryAtDelete);
         $documentManager->flush();
         return new Response(null, 204);
+    }
+
+    /**
+     * @throws MappingException
+     * @throws Throwable
+     * @throws MongoDBException
+     * @throws LockException
+     */
+    #[Route('/api/admin/categories/{id}/image', name: 'api_category_post_image', methods: ['POST'])]
+    public function uploadImageCategory(
+        string $id,
+        Request $request,
+        DocumentManager $documentManager,
+        #[Autowire('%kernel.project_dir%')] string $projectDir,
+    ): JsonResponse {
+        $category = $documentManager->getRepository(Category::class)->find($id);
+
+        if ($category == null) {
+            return $this->json(['errors' => 'Cette Category n\'existe pas '], 404);
+        }
+        $image = $request->files->get('image');
+
+        if ($image == null) {
+            return $this->json(['errors' => 'le corps de la requete est invalide '], 400);
+        }
+        $newFilename = $id.'-'.time().'.'.$image->guessExtension();
+        $destinationPath = "{$projectDir}/public/uploads/categories";
+        $image->move($destinationPath, $newFilename);
+        $category->setImage('/uploads/categories/' . $newFilename);
+        $documentManager->persist($category);
+        $documentManager->flush();
+
+        return $this->json([
+            'id' => $category->getId(),
+            'name' => $category->getName(),
+            'description' => $category->getDescription(),
+            'order' => $category->getOrder(),
+            'slug' => $category->getSlug(),
+            'image' => $category->getImage(),
+        ], 200);
     }
 }

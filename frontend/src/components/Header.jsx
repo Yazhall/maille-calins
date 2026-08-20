@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 const NAV_LINKS = [
     { label: 'Boutique', to: '/boutique' },
     { label: 'Sur Commande', to: '/sur-commande' },
-    { label: 'À propos', to: '/a-propos' },
+    { label: 'À propos', to: '/about' },
     { label: 'Contact', to: '/contact' },
 ];
 

@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { HandHeart, Sparkles, Truck, ImageIcon } from 'lucide-react';
 import { getCategories, getProducts } from '../api/catalogApi';
+import { getImageUrl } from '../utils/imageUrl.js';
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 import Button from '../components/Button.jsx';
 import ProductCard from '../components/ProductCard.jsx';
+import heroImage from '../assets/images/hero-home.jpg';
 
 function AnnounceBar() {
     return (
@@ -19,8 +21,12 @@ function Hero() {
     return (
         <section className="bg-rose-poudre px-4 md:px-16 py-10 md:py-20">
             <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
-                <div className="w-full md:w-1/2 aspect-square bg-blanc rounded-xl flex items-center justify-center">
-                    <ImageIcon className="w-12 h-12 text-brun-gris" strokeWidth={1.2} />
+                <div className="w-full md:w-1/2 aspect-square bg-blanc rounded-xl overflow-hidden">
+                    <img
+                        src={heroImage}
+                        alt="Création crochet Maille & Câlins"
+                        className="w-full h-full object-cover"
+                    />
                 </div>
 
                 <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left gap-4">
@@ -86,8 +92,16 @@ function Univers({ categories }) {
                         to={`/boutique?categorie=${category.slug}`}
                         className="bg-creme rounded-xl p-4 flex flex-col items-center gap-3"
                     >
-                        <div className="w-full aspect-square bg-blanc rounded-lg flex items-center justify-center">
-                            <ImageIcon className="w-8 h-8 text-brun-gris" strokeWidth={1.2} />
+                        <div className="w-full aspect-square bg-blanc rounded-lg overflow-hidden flex items-center justify-center">
+                            {category.image ? (
+                                <img
+                                    src={getImageUrl(category.image)}
+                                    alt={category.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <ImageIcon className="w-8 h-8 text-brun-gris" strokeWidth={1.2} />
+                            )}
                         </div>
                         <p className="font-body text-body-sm text-noir-chaud">{category.name}</p>
                     </Link>
@@ -105,6 +119,7 @@ function CoupsDeCoeur({ products }) {
                 {products.map((product) => (
                     <Link key={product.id} to={`/products/${product.slug}`}>
                         <ProductCard
+                            image={product.image ? getImageUrl(product.image) : null}
                             name={product.name}
                             details="15 cm · Pièce unique"
                             price={`${product.price.toFixed(2)} €`}
