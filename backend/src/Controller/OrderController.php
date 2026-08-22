@@ -44,7 +44,10 @@ public function createOrder(
     }
 
     try{
-        $order = $orderService->createOrder( $user,$createOrderDto->shippingAddressId, $createOrderDto->billingAddressId);
+        $order = $orderService->createOrder(
+            $user,
+            $createOrderDto->shippingAddressId,
+            $createOrderDto->billingAddressId);
     }catch(InvalidArgumentException $exception){
         return $this->json(['error' => $exception->getMessage()], 400);
 
@@ -60,6 +63,12 @@ private function formatOrder(Order $order): array{
             'orderNumber' => $order->getOrderNumber(),
             'totalAmount' => $order->getTotalAmount(),
             'createdAt' => $order->getCreatedAt()->format('Y-m-d H:i:s'),
+            'items' => array_map(fn($item) => [
+                'productId' => $item->getProductId(),
+                'name' => $item->getProductNameSnapshot(),
+                'quantity' => $item->getQuantity(),
+                'price' => $item->getProductPriceSnapshot(),
+            ], $order->getOrderItems()->toArray()),
         ];
 }
 

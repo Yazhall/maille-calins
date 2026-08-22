@@ -31,8 +31,8 @@ export function CartProvider({children}){
         }
     }
 
-    async function addItem(produtId, quanity){
-        await addItemToCart(produtId, quanity);
+    async function addItem(productId, quantity){
+        await addItemToCart(productId, quantity);
         await refreshCart();
     }
 
