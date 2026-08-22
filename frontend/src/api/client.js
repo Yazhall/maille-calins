@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8080/api',
+    baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -15,7 +15,7 @@ apiClient.interceptors.request.use((config) => {
     return config;
 });
 
-// AJOUTE CECI : nettoie le token périmé/invalide dès qu'un 401 arrive
+
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {

@@ -15,7 +15,9 @@ readonly class ProductService
 
     }
     public function findById(string $id): ?Product{
-        return $this->documentManager->getRepository(Product::class)->findOneBy(['id' => $id, 'status' => 'published']);
+        return $this->documentManager
+            ->getRepository(Product::class)
+            ->findOneBy(['id' => $id, 'status' => 'published']);
 
     }
 

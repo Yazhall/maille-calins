@@ -17,6 +17,10 @@ import AdminOrdersPage from './pages/AdminOrdersPage.jsx';
 import AdminReviewsPage from './pages/AdminReviewsPage.jsx';
 import ContactPage from "./pages/ContactPage.jsx";
 import AboutPage from "./pages/AboutPage.jsx";
+import CGVPage from "./pages/Cgvpage.jsx";
+import MentionsLegalesPage from "./pages/Mentionslegalespage.jsx";
+import ConfidentialitePage from "./pages/ConfidentialitePage.jsx";
+import CookiesPage from "./pages/Cookiespage.jsx";
 function App() {
   return (
       <BrowserRouter>
@@ -32,7 +36,11 @@ function App() {
             <Route path="/commande" element={<CommandePage />} />
             <Route path="/contact" element={<ContactPage/>}/>
             <Route path="/about" element={<AboutPage/>}/>
+            <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
+            <Route path="/cgv" element={<CGVPage />} />
+            <Route path="/confidentialite" element={<ConfidentialitePage />} />
             <Route path="/products/:slug" element={<ProductDetailPage />} />
+            <Route path="/cookies" element={<CookiesPage />} />
             <Route path="/admin" element={<AdminRoute> <AdminDashboardPage /> </AdminRoute> } />
             <Route path="/admin/produits" element={<AdminRoute> <AdminProductsPage /> </AdminRoute>} />
             <Route path="/admin/categories" element={<AdminRoute> <AdminCategoriesPage /> </AdminRoute>} />
