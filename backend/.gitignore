@@ -10,6 +10,8 @@
 /public/bundles/
 /public/uploads/products/*
 !/public/uploads/products/.gitkeep
+/public/uploads/categories/*
+!/public/uploads/categories/.gitkeep
 /var/
 /vendor/
 ###< symfony/framework-bundle ###

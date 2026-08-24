@@ -53,6 +53,7 @@ class ProductFixtures extends Fixture
         if (!is_dir($uploadsDir)) {
             mkdir($uploadsDir, 0777, true);
         }
+        $seedImagesDir = $this->projectDir . '/assets/seed-images/products';
 
         foreach ($productData as $data) {
             $product = new Product();
@@ -65,13 +66,15 @@ class ProductFixtures extends Fixture
             $product->setCreatedAt(new DateTimeImmutable());
             $product->setUpdatedAt(new DateTimeImmutable());
 
-            $filename = $data['slug'] . '.jpg';
-            $localPath = $uploadsDir . '/' . $filename;
-            $imageContent = @file_get_contents('https://picsum.photos/seed/' . $data['slug'] . '/400/400');
-            if ($imageContent !== false) {
-                file_put_contents($localPath, $imageContent);
+            $seedImage = $this->findSeedImage($seedImagesDir, $data['slug']);
+            if ($seedImage !== null) {
+                $filename = $data['slug'] . '.' . $seedImage['ext'];
+                $localPath = $uploadsDir . '/' . $filename;
+                copy($seedImage['path'], $localPath);
                 $product->setImage('/uploads/products/' . $filename);
             }
+            // Si aucune image seed n'existe pour ce produit (ex: nouveau produit sans photo
+            // encore fournie), le champ image reste simplement non renseigné.
 
             $randomCategory = $categories[array_rand($categories)];
             $product->setCategoryIds([$randomCategory->getId()]);
@@ -80,6 +83,24 @@ class ProductFixtures extends Fixture
 
         }
         $this->documentManager->flush();
+    }
+
+    /**
+     * Cherche une image seed pour le slug donné parmi les extensions courantes.
+     * Retourne le chemin absolu et l'extension trouvée, ou null si aucune image
+     * n'existe pour ce produit.
+     *
+     * @return array{path: string, ext: string}|null
+     */
+    private function findSeedImage(string $dir, string $slug): ?array
+    {
+        foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+            $path = $dir . '/' . $slug . '.' . $ext;
+            if (is_file($path)) {
+                return ['path' => $path, 'ext' => $ext];
+            }
+        }
+        return null;
     }
 
 }
