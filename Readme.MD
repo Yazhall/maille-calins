@@ -16,6 +16,8 @@ Projet réalisé dans le cadre de la certification **Développeur Web et Web Mob
 - [Utilisation](#utilisation)
 - [Structure du projet](#structure-du-projet)
 - [Comptes de test](#comptes-de-test)
+- [Tests automatisés](#tests-automatisés)
+- [Intégration continue](#intégration-continue)
 - [Commandes utiles](#commandes-utiles)
 - [Dépannage](#dépannage)
 
@@ -58,6 +60,7 @@ Maille & Câlins propose un parcours e-commerce complet :
 - **React Router**
 - **Tailwind CSS v4**
 - **Axios**
+- **Vitest + React Testing Library** — tests unitaires
 
 ### Bases de données
 - **PostgreSQL 16** — données transactionnelles (utilisateurs, adresses, panier, commandes, paiements)
@@ -65,6 +68,8 @@ Maille & Câlins propose un parcours e-commerce complet :
 
 ### Environnement
 - **Docker / Docker Compose**
+- **Make** — automatisation des commandes courantes
+- **GitHub Actions** — intégration continue (tests backend + frontend)
 
 ---
 
@@ -90,6 +95,7 @@ Entity/Document → représentation des tables PostgreSQL / collections MongoDB
 ## Prérequis
 
 - [Docker](https://www.docker.com/) et Docker Compose installés
+- [Make](https://www.gnu.org/software/make/) (préinstallé sur Linux/macOS ; sous Windows, utiliser WSL2)
 - Git
 
 Aucune autre dépendance n'est nécessaire sur la machine hôte : PHP, Node.js, PostgreSQL et MongoDB tournent entièrement dans des conteneurs Docker.
@@ -107,62 +113,80 @@ cd maille-calins
 
 ### 2. Configurer les variables d'environnement backend
 
-Créer le fichier `backend/.env.local` avec le contenu suivant :
+Créer le fichier `backend/.env.local` avec le contenu suivant (ce fichier sert à la fois à Docker Compose et à Symfony) :
 
 ```env
-DATABASE_URL="postgresql://amdin:password@postgres:5432/maille_calins?serverVersion=16&charset=utf8"
-MONGODB_URL="mongodb://mongo:27017"
+###> symfony/framework-bundle ###
+APP_ENV=dev
+APP_SECRET=changez_moi_avec_une_valeur_aleatoire
+APP_SHARE_DIR=var/share
+###< symfony/framework-bundle ###
+
+# --- Docker Compose (bases de données) ---
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=password
+POSTGRES_DB=maille_calins
+MONGO_DB=maille_calins_catalog
+MONGO_EXPRESS_USER=admin
+MONGO_EXPRESS_PASSWORD=password
+
+###> symfony/routing ###
+DEFAULT_URI=http://localhost
+###< symfony/routing ###
+
+###> doctrine/doctrine-bundle ###
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8"
+MONGODB_URI="mongodb://mongo:27017"
 MONGODB_DB="maille_calins_catalog"
+###< doctrine/doctrine-bundle ###
+
+###> symfony/messenger ###
+MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0
+###< symfony/messenger ###
+
+###> symfony/mailer ###
+MAILER_DSN=smtp://mailhog:1025
+###< symfony/mailer ###
 
 JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
 JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
 JWT_PASSPHRASE=une_passphrase_de_votre_choix
 
-MAILER_DSN=smtp://mailhog:1025
+CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 ```
 
-> ⚠️ Adaptez les identifiants PostgreSQL (`amdin`/`password`) selon ceux définis dans `docker-compose.yml`.
+> ⚠️ Les identifiants PostgreSQL/Mongo Express (`admin`/`password`) sont ceux d'un environnement de développement local. `DATABASE_URL` référence automatiquement `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB` via `${...}` (interpolation gérée par le composant Dotenv de Symfony) : modifiez uniquement ces trois variables, `DATABASE_URL` restera cohérent sans risque de désynchronisation. Générez une vraie valeur aléatoire pour `APP_SECRET` et `JWT_PASSPHRASE` plutôt que de garder l'exemple ci-dessus tel quel.
 
-### 3. Démarrer les conteneurs
+### 3. Configurer les variables d'environnement frontend
+
+Créer le fichier `frontend/.env` à partir de l'exemple fourni :
 
 ```bash
-docker compose up -d
+cp frontend/.env.example frontend/.env
 ```
 
-### 4. Installer les dépendances backend
+> Ce fichier définit `VITE_API_BASE_URL`, utilisée par le frontend pour construire les URLs des images produit. Sans lui, les tests frontend échouent avec une erreur `undefined` dans l'URL.
+
+### 4. Installation complète
+
+Une seule commande installe tout (conteneurs, dépendances, clés JWT, migrations, fixtures, permissions) :
 
 ```bash
-docker exec -it maille_php composer install
+make install
 ```
 
-### 5. Générer les clés JWT
+Cette commande enchaîne, dans l'ordre : `up` → `composer-install` → `jwt-generate` → `db-migrate` → `fixtures` → `fix-permissions` → `npm-install`.
+
+Pour installer étape par étape (utile pour comprendre ou déboguer) :
 
 ```bash
-docker exec -it maille_php php bin/console lexik:jwt:generate-keypair
-```
-
-### 6. Exécuter les migrations de base de données
-
-```bash
-docker exec -it maille_php php bin/console doctrine:migrations:migrate
-```
-
-### 7. Charger les données de test (fixtures)
-
-```bash
-docker exec -it maille_php php bin/console doctrine:fixtures:load
-```
-
-### 8. Corriger les permissions du dossier d'upload
-
-```bash
-docker exec -it maille_php chmod -R a+rwX /var/www/backend/public/uploads
-```
-
-### 9. Installer les dépendances frontend
-
-```bash
-docker exec -it maille_node npm install
+make up                 # démarre tous les conteneurs
+make composer-install   # installe les dépendances Symfony
+make jwt-generate        # génère la paire de clés JWT
+make db-migrate          # applique les migrations de base de données
+make fixtures            # charge les données de test
+make fix-permissions     # corrige les droits du dossier d'upload
+make npm-install         # installe les dépendances frontend
 ```
 
 ---
@@ -185,6 +209,7 @@ Une fois l'installation terminée, les services sont accessibles aux adresses su
 
 ```
 maille-calins/
+├── .github/workflows/     # Pipeline CI (GitHub Actions)
 ├── backend/
 │   ├── src/
 │   │   ├── Controller/       # Contrôleurs (dont Admin/ pour le back-office)
@@ -193,17 +218,20 @@ maille-calins/
 │   │   ├── Entity/           # Entités PostgreSQL (Doctrine ORM)
 │   │   ├── Document/         # Documents MongoDB (Doctrine ODM)
 │   │   └── DataFixtures/     # Données de test
+│   ├── tests/Service/        # Tests unitaires PHPUnit
 │   ├── config/
 │   ├── migrations/
 │   └── public/uploads/       # Fichiers uploadés (images produits)
 ├── frontend/
+│   ├── .env.example           # Modèle de configuration frontend
 │   ├── src/
 │   │   ├── api/               # Appels HTTP vers le backend
-│   │   ├── components/        # Composants React réutilisables
+│   │   ├── components/        # Composants React réutilisables (+ tests Vitest)
 │   │   ├── context/           # Contextes globaux (Auth, Cart)
 │   │   ├── pages/              # Pages de l'application
 │   │   └── utils/
 ├── docker-compose.yml
+├── Makefile
 └── README.md
 ```
 
@@ -222,23 +250,42 @@ Après le chargement des fixtures, les comptes suivants sont disponibles (mot de
 
 ---
 
+## Tests automatisés
+
+```bash
+make test-backend    # tests PHPUnit (backend)
+make test-frontend   # tests Vitest (frontend)
+make test            # les deux d'un coup
+```
+
+Le projet compte actuellement 18 tests backend (services CartService et OrderService) et 11 tests frontend (composants ProductCard, Button, et utilitaire getImageUrl), tous exécutés sans base de données réelle grâce à l'isolation des dépendances (doublons de test).
+
+---
+
+## Intégration continue
+
+Un pipeline GitHub Actions (`.github/workflows/ci.yml`) exécute automatiquement les tests backend et frontend à chaque push ou pull request sur les branches `main` et `develop`. Il garantit qu'aucune régression n'est fusionnée sans que l'ensemble de la suite de tests ne passe.
+
+---
+
 ## Commandes utiles
 
 ```bash
+make up              # démarre tous les conteneurs
+make down             # stoppe tous les conteneurs
+make build            # rebuild les images (après modif Dockerfile)
+make logs             # suit les logs de tous les services
+make sh-php           # ouvre un shell dans le conteneur PHP
+make sh-node          # ouvre un shell dans le conteneur Node
+
 # Recharger entièrement les données de test (supprime et recrée tout)
-docker exec -it maille_php php bin/console doctrine:fixtures:load
+make fixtures
 
 # Vérifier l'état des migrations
-docker exec -it maille_php php bin/console doctrine:migrations:status
+docker compose --env-file backend/.env.local exec php php bin/console doctrine:migrations:status
 
 # Consulter les logs applicatifs Symfony
-docker exec -it maille_php tail -f var/log/dev.log
-
-# Consulter les logs d'un conteneur
-docker logs maille_php --tail 50
-
-# Redémarrer un conteneur
-docker restart maille_node
+docker compose --env-file backend/.env.local exec php tail -f var/log/dev.log
 ```
 
 ---
@@ -247,17 +294,23 @@ docker restart maille_node
 
 **Erreur "Unable to write in the uploads directory"**
 ```bash
-docker exec -it maille_php chmod -R a+rwX /var/www/backend/public/uploads
+make fix-permissions
 ```
 
 **Erreur d'import de module frontend après une nouvelle installation de package**
 ```bash
-docker exec -it maille_node rm -rf node_modules/.vite
+docker compose --env-file backend/.env.local exec node rm -rf node_modules/.vite
 docker restart maille_node
 ```
 
 **Emails non reçus dans MailHog**
 Vérifier que le transport `SendEmailMessage` est bien routé en `sync` (et non `async`) dans `backend/config/packages/messenger.yaml`, faute de quoi les emails restent en file d'attente sans être traités (aucun worker Messenger n'est configuré dans cet environnement de développement).
+
+**Tests frontend en échec avec des valeurs `undefined` dans les URLs**
+Le fichier `frontend/.env` est manquant (non versionné par Git, à recréer sur chaque nouveau poste de développement) :
+```bash
+cp frontend/.env.example frontend/.env
+```
 
 ---
 
