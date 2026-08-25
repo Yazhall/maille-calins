@@ -28,8 +28,8 @@ fixtures: ## Charge les fixtures (jeu d'essai)
 jwt-generate: ## Génère la paire de clés JWT (à faire une seule fois)
 	docker compose --env-file backend/.env.local exec php sh -c "test -f config/jwt/private.pem || php bin/console lexik:jwt:generate-keypair"
 
-fix-permissions: ## Corrige les droits d'écriture sur le dossier d'upload
-	docker compose --env-file backend/.env.local exec php chmod -R a+rwX /var/www/backend/public/uploads
+fix-permissions: ## Corrige les droits d'écriture sur les dossiers cache et upload
+	docker compose --env-file backend/.env.local exec php chmod -R a+rwX /var/www/backend/public/uploads /var/www/backend/var
 
 npm-install: ## Installe les dépendances frontend
 	docker compose --env-file backend/.env.local exec node npm install

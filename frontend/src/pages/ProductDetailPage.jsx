@@ -8,7 +8,7 @@ import Footer from '../components/Footer.jsx';
 import Button from '../components/Button.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import { getImageUrl } from '../utils/imageUrl.js';
-
+import { Helmet } from 'react-helmet-async';
 function AnnounceBar() {
     return (
         <div className="bg-noir-chaud text-blanc text-center py-2 px-4">
@@ -204,6 +204,10 @@ export default function ProductDetailPage() {
 
     return (
         <div>
+            <Helmet>
+                <title>{`${product.name} - Maille & Câlins`}</title>
+                <meta name="description" content={product.description} />
+            </Helmet>
             <AnnounceBar />
             <Header />
 
