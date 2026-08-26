@@ -33,7 +33,7 @@ readonly class ReviewService
             throw new InvalidArgumentException('Vous devez avoir acheté ce produit pour laisser un avis');
         }
 
-        //Vérifier qu'il n'a pas déjà laissé une review sur ce produit (rappelle-toi l'index unique composé productId + userId en base — si on ne vérifie pas nous-mêmes en amont, MongoDB va lever une erreur de duplicate key, moins propre à gérer qu'une vérification explicite)
+        //Vérifier qu'il n'a pas déjà laissé une review sur ce produit
         $reviewIs = $this->documentManager->getRepository(Review::class)->findOneBy(['productId' => $productId, 'userId' =>(string) $user->getId()]);
         if ($reviewIs !== null){
             throw new InvalidArgumentException("un review a deja etait laisser sur ce produit");
@@ -53,11 +53,14 @@ readonly class ReviewService
     }
 
     public function listReviewsByProduct(string $productId): array{
-        return  $this->documentManager->getRepository(Review::class)->findBy(['productId' => $productId,'status' => 'published']);
+        return  $this->documentManager->getRepository(Review::class)->findBy(['productId' => $productId,'status' => 'published'], ['createdAt' => 'DESC']);
     }
 
     public function listPendingReviews():array{
         return $this->documentManager->getRepository(Review::class)->findBy(['status' => 'pending']);
+    }
+    public function listPublishedReviews():array{
+        return $this->documentManager->getRepository(Review::class)->findBy(['status' => 'published'],['createdAt' => 'DESC']);
     }
 
     /**
@@ -91,6 +94,18 @@ readonly class ReviewService
 
         $this->documentManager->persist($product);
         $this->documentManager->flush();
+    }
+    public function replyToReview(string $reviewId, string $reply): Review{
+        $review = $this->documentManager->getRepository(Review::class)->findOneBy(['id' => $reviewId,'status' => 'published']);
+
+        if ($review === null){
+            throw new InvalidArgumentException("Cet avis n\'existe pas ou n\'est pas encore publié.");
+        }
+        $review->setAdminReply($reply);
+        $review->setAdminReplyAt(new DateTimeImmutable());
+        $this->documentManager->persist($review);
+        $this->documentManager->flush();
+        return $review;
     }
 
 

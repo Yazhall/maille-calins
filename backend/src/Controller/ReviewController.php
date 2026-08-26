@@ -68,6 +68,8 @@ class ReviewController extends AbstractController
             'comment' => $review->getComment(),
             'rating' => $review->getRating(),
             'status' => $review->getStatus(),
+            'adminReply' => $review->getAdminReply(),
+            'adminReplyAt' => $review->getAdminReplyAt()?->format('Y-m-d H:i:s'),
             'createdAt' => $review->getCreatedAt()->format('Y-m-d H:i:s'),
         ];
     }

@@ -1,12 +1,9 @@
 <?php
 
 namespace App\Controller\Admin;
-use App\Dto\CreateOrderDto;
 use App\Entity\Order;
-use App\Entity\User;
 use App\Service\OrderService;
 use App\Dto\UpdateOrderStatusDto;
-use DateTimeImmutable;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,10 +11,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Throwable;
+
 
 #[IsGranted('ROLE_ADMIN')]
 class OrderController extends AbstractController
