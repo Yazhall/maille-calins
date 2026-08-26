@@ -8,6 +8,7 @@ const NAV_ITEMS = [
     { label: 'Catégories', to: '/admin/categories' },
     { label: 'Commandes', to: '/admin/commandes' },
     { label: 'Avis clients', to: '/admin/avis' },
+    { label: 'Réponses aux avis', to: '/admin/avis/reponses' },
 ];
 
 export default function AdminLayout({ children }) {

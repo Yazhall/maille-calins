@@ -3,8 +3,6 @@
 namespace App\Controller;
 use App\Document\Product;
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Doctrine\ODM\MongoDB\LockException;
-use Doctrine\ODM\MongoDB\Mapping\MappingException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
