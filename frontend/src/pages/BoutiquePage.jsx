@@ -5,7 +5,7 @@ import { getImageUrl } from '../utils/imageUrl.js';
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 import ProductCard from '../components/ProductCard.jsx';
-
+import { Helmet } from 'react-helmet-async';
 const PRODUCTS_PER_PAGE = 6;
 
 function AnnounceBar() {
@@ -139,6 +139,10 @@ export default function BoutiquePage() {
 
     return (
         <div>
+            <Helmet>
+                <title>{`${categories.find(c => c.slug === selectedSlug)?.name || 'Notre Boutique'} - Maille & Câlins`}</title>
+                <meta name="description" content="Découvrez notre boutique de créations artisanales en crochet et tricot." />
+            </Helmet>
             <AnnounceBar />
             <Header />
 
