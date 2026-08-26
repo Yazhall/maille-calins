@@ -49,6 +49,9 @@ class ReviewFixtures extends Fixture implements DependentFixtureInterface
             ['userRef' => 'user_11', 'rating' => 5, 'comment' => 'Cadeau parfait, tout le monde a adoré.'],
             ['userRef' => 'user_12', 'rating' => 3, 'comment' => 'Bien mais un peu cher pour la taille.'],
         ];
+
+        $affectedProductIds = [];
+
         foreach ($reviewsData as $data){
             $user = $this->getReference($data['userRef'], User::class);
             $product = $products[array_rand($products)];
@@ -64,8 +67,30 @@ class ReviewFixtures extends Fixture implements DependentFixtureInterface
 
             $this->documentManager->persist($review);
 
-
+            $affectedProductIds[(string) $product->getId()] = true;
         }
+        $this->documentManager->flush();
+
+        foreach (array_keys($affectedProductIds) as $productId) {
+            $this->recalculateProductRating($productId);
+        }
+    }
+
+    private function recalculateProductRating(string $productId): void{
+        $reviews = $this->documentManager->getRepository(Review::class)->findBy(['productId' => $productId, 'status' => 'published']);
+
+        $product = $this->documentManager->getRepository(Product::class)->find($productId);
+
+        if (empty($reviews)) {
+            $product->setRatingAverage(0);
+            $product->setRatingCount(0);
+        } else {
+            $average = array_sum(array_map(fn(Review $review) => $review->getRating(), $reviews)) / count($reviews);
+            $product->setRatingAverage($average);
+            $product->setRatingCount(count($reviews));
+        }
+
+        $this->documentManager->persist($product);
         $this->documentManager->flush();
     }
 
