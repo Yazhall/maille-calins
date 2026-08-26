@@ -22,7 +22,14 @@ private ?string $comment = null;
     #[MongoDB\Field(name: "status", type: "string")]
 private ?string $status = null;
     #[MongoDB\Field(name: "createdAt", type: "date_immutable")]
-private ?\DateTimeImmutable $createdAt = null;
+private ?DateTimeImmutable $createdAt = null;
+
+    #[MongoDB\Field(name: "adminReply", type: "string")]
+    private ?string $adminReply = null;
+    #[MongoDB\Field(name: "adminReplyAt", type: "date_immutable")]
+    private ?DateTimeImmutable $adminReplyAt = null;
+
+
 
     public function getId(): ?string
     {
@@ -102,6 +109,27 @@ private ?\DateTimeImmutable $createdAt = null;
     public function setCreatedAt(?DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+        return $this;
+    }
+    public function getAdminReply(): ?string
+    {
+        return $this->adminReply;
+    }
+
+    public function setAdminReply(?string $adminReply): self
+    {
+        $this->adminReply = $adminReply;
+        return $this;
+    }
+
+    public function getAdminReplyAt(): ?DateTimeImmutable
+    {
+        return $this->adminReplyAt;
+    }
+
+    public function setAdminReplyAt(?DateTimeImmutable $adminReplyAt): self
+    {
+        $this->adminReplyAt = $adminReplyAt;
         return $this;
     }
 

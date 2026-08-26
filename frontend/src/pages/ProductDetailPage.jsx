@@ -6,9 +6,11 @@ import { useCart } from '../context/CartContext.jsx';
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 import Button from '../components/Button.jsx';
+import ReviewsList from '../components/ReviewsList.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import { getImageUrl } from '../utils/imageUrl.js';
 import { Helmet } from 'react-helmet-async';
+
 function AnnounceBar() {
     return (
         <div className="bg-noir-chaud text-blanc text-center py-2 px-4">
@@ -85,42 +87,7 @@ function AccordionItem({ title, content, isOpen, onToggle }) {
         </div>
     );
 }
-function ReviewsList({ reviews }) {
-    if (reviews.length === 0) {
-        return (
-            <p className="font-body text-body-sm text-brun-gris pb-4">
-                Aucun avis pour le moment sur ce produit.
-            </p>
-        );
-    }
 
-    return (
-        <div className="flex flex-col gap-4 pb-4">
-            {reviews.map((review) => (
-                <div key={review.id} className="border-b border-brun-gris/10 last:border-b-0 pb-4">
-                    <div className="flex items-center gap-2 mb-1">
-                        <div className="flex items-center gap-0.5">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                    key={star}
-                                    className={`w-3.5 h-3.5 ${
-                                        star <= review.rating
-                                            ? 'fill-roux-principal text-roux-principal'
-                                            : 'text-brun-gris/30'
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                        <p className="font-body text-body-sm font-medium text-noir-chaud">
-                            {review.userNameSnapshot}
-                        </p>
-                    </div>
-                    <p className="font-body text-body-sm text-brun-gris">{review.comment}</p>
-                </div>
-            ))}
-        </div>
-    );
-}
 
 export default function ProductDetailPage() {
     const { slug } = useParams();
@@ -284,7 +251,19 @@ export default function ProductDetailPage() {
                                 Avis clients ({reviews.length})
                                 <ChevronDown className={`w-4 h-4 transition-transform ${openAccordion === 'avis' ? 'rotate-180' : ''}`} />
                             </button>
-                            {openAccordion === 'avis' && <ReviewsList reviews={reviews} />}
+                            {openAccordion === 'avis' && (
+                                <>
+                                    <ReviewsList reviews={reviews.slice(0, 3)} />
+                                    {reviews.length > 3 && (
+                                        <Link
+                                            to={`/products/${slug}/reviews`}
+                                            className="block text-center font-body text-body-sm text-roux-principal pb-4"
+                                        >
+                                            Voir tous les avis ({reviews.length})
+                                        </Link>
+                                    )}
+                                </>
+                            )}
                         </div>
 
                     </div>
