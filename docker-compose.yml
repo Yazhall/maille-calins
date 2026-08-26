@@ -23,7 +23,7 @@ services:
             - ./backend:/var/www/backend
         environment:
             DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8"
-            MONGODB_URL: "mongodb://mongo:27017"
+            MONGODB_URI: "mongodb://mongo:27017"
             MONGODB_DB: "${MONGO_DB}"
             MAILER_DSN: "smtp://mailhog:1025"
             APP_ENV: dev
@@ -88,8 +88,8 @@ services:
         container_name: maille_mongo_express
         environment:
             ME_CONFIG_MONGODB_SERVER: mongo
-            ME_CONFIG_BASICAUTH_USERNAME: admin
-            ME_CONFIG_BASICAUTH_PASSWORD: admin
+            ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER}
+            ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
         ports:
             - "8082:8081"
         depends_on:
