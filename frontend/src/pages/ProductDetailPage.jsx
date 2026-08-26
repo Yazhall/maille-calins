@@ -224,11 +224,19 @@ export default function ProductDetailPage() {
                     <div className="bg-blanc rounded-xl p-6 flex flex-col gap-3">
                         <h1 className="font-heading text-h2 text-noir-chaud">{product.name}</h1>
                         <p className="font-body text-h3 text-noir-chaud">{product.price.toFixed(2)} €</p>
+                        {product.ratingCount > 0 && (
+                            <p className="font-body text-body-sm text-brun-gris flex items-center gap-1">
+                                <Star className="w-4 h-4 fill-roux-principal text-roux-principal" />
+                                {product.ratingAverage.toFixed(1)}/5 ({product.ratingCount} avis)
+                            </p>
+                        )}
                         <p className="font-body text-body-sm text-brun-gris">
                             15 cm · Pièce unique · Fait main
                         </p>
                         <p className="font-body text-body text-noir-chaud">{product.description}</p>
+
                     </div>
+
 
                     <QuantitySelector quantity={quantity} onChange={setQuantity} />
 

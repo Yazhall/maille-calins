@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Service;
+use App\Document\Product;
 use App\Entity\User;
 use App\Document\Review;
 use DateTimeImmutable;
@@ -71,7 +72,25 @@ readonly class ReviewService
         $review->setStatus($status);
         $this->documentManager->persist($review);
         $this->documentManager->flush();
+        $this->recalculateProductRating($review->getProductId());
         return $review;
+    }
+    public function recalculateProductRating(string $productId): void{
+        $reviews = $this->documentManager->getRepository(Review::class)->findBy(['productId' => $productId, 'status' => 'published']);
+
+        $product = $this->documentManager->getRepository(Product::class)->find($productId);
+
+        if (empty($reviews)) {
+            $product->setRatingAverage(0);
+            $product->setRatingCount(0);
+        } else {
+            $average = array_sum(array_map(fn(Review $review) => $review->getRating(), $reviews)) / count($reviews);
+            $product->setRatingAverage($average);
+            $product->setRatingCount(count($reviews));
+        }
+
+        $this->documentManager->persist($product);
+        $this->documentManager->flush();
     }
 
 
