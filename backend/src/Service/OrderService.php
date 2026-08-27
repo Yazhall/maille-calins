@@ -3,9 +3,7 @@
 namespace App\Service;
 use App\Entity\Order;
 use App\Entity\OrderItem;
-use App\Document\Product;
 use App\Entity\Address;
-use App\Repository\OrderItemRepository;
 use App\Repository\OrderRepository;
 use App\Entity\User;
 use DateTimeImmutable;

@@ -2,11 +2,17 @@
 
 namespace App\Controller;
 use App\Dto\RegisterUserDto;
+use App\Dto\ForgotPasswordDto;
+use App\Dto\ResetPasswordDto;
 use App\Service\UserRegistrationService;
+use App\Service\PasswordResetService;
 use InvalidArgumentException;
+use Random\RandomException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -62,7 +68,51 @@ class AuthController extends AbstractController
             'message'=> 'le compte a bien etait vérifié'
 
         ]);
+    }
 
+    /**
+     * @throws ExceptionInterface
+     * @throws TransportExceptionInterface
+     * @throws RandomException
+     */
+    #[Route('/api/forgot-password', name: 'api_forgot_password', methods: ['POST']  )]
+    public function ForgetPassword(
+        Request $request,
+        PasswordResetService $passwordResetService,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+    ): JsonResponse
+    {
+        $dto = $serializer->deserialize($request->getContent(), ForgotPasswordDto::class, 'json');
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            return $this->json(['errors' => $errors], 400);
+        }
+        $passwordResetService->requestReset($dto->email);
+        return $this->json([
+            'message' => 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.',
+        ]);
+    }
+    #[Route('/api/reset-password', name: 'api_reset_password', methods: ['POST'])]
+    public function ResetPassword(
+        Request $request,
+        PasswordResetService $passwordResetService,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+    ): JsonResponse{
+        $dto = $serializer->deserialize($request->getContent(), ResetPasswordDto::class, 'json');
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            return $this->json(['errors' => $errors], 400);
+        }
+        try{
+            $passwordResetService->resetPassword($dto);
+        }catch (InvalidArgumentException $exception){
+            return $this->json(['errors' => $exception->getMessage()], 400);
+        }
+        return $this->json([
+            'message' => 'Votre mot de passe a été réinitialisé avec succès.',
+        ]);
     }
 
 }
