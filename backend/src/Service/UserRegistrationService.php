@@ -3,6 +3,7 @@
 namespace App\Service;
 use App\Dto;
 use App\Service\EmailService;
+use App\Dto\UpdateUserDto;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -18,6 +19,7 @@ readonly class UserRegistrationService
         private EntityManagerInterface      $entityManager,
         private UserPasswordHasherInterface $userPasswordHasher,
         private EmailService               $emailService,
+        private UpdateUserDto             $updateUserDto,
     ){
 
     }
@@ -64,6 +66,23 @@ readonly class UserRegistrationService
         $this->entityManager->flush();
         return $user;
 
+    }
+
+    public function updateProfile(User $user, UpdateUserDto $dto): User {
+
+        if ($dto->firstName !==  null ) {
+            $user->setFirstName($dto->firstName);
+        }
+        if ($dto->lastName !==  null ) {
+            $user->setLastName($dto->lastName);
+        }
+        if ($dto->phone !==  null ) {
+            $user->setPhone($dto->phone);
+        }
+        $user->setUpdatedAt(new DateTimeImmutable());
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+        return $user;
     }
 
 

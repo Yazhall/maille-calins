@@ -89,7 +89,7 @@ class AuthController extends AbstractController
             return $this->json(['errors' => $errors], 400);
         }
         $passwordResetService->requestReset($dto->email);
-        return $this->json([
+         return $this->json([
             'message' => 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.',
         ]);
     }
