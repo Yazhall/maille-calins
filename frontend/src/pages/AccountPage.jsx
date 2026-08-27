@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronDown, Trash2, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import apiClient from '../api/client.js';
@@ -65,7 +65,71 @@ function NavDesktop({ activeSection, onSelect }) {
     );
 }
 
-function InfosPersonnellesSection({ user }) {
+function InfosPersonnellesSection({ user, onUpdated }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [form, setForm] = useState({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone || '',
+    });
+    const [error, setError] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    function handleChange(field, value) {
+        setForm((current) => ({ ...current, [field]: value }));
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setError(null);
+        setIsSubmitting(true);
+        try {
+            await apiClient.patch('/me', form);
+            onUpdated();
+            setIsEditing(false);
+        } catch (err) {
+            setError(err.response?.data?.errors || 'Erreur lors de la mise à jour.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    if (isEditing) {
+        return (
+            <div className="flex flex-col items-center gap-6 text-center">
+                <h2 className="font-heading text-h2 text-noir-chaud">Modifier mes informations</h2>
+                <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-4">
+                    <Input
+                        placeholder="Prénom"
+                        value={form.firstName}
+                        onChange={(e) => handleChange('firstName', e.target.value)}
+                        required
+                    />
+                    <Input
+                        placeholder="Nom"
+                        value={form.lastName}
+                        onChange={(e) => handleChange('lastName', e.target.value)}
+                        required
+                    />
+                    <Input
+                        placeholder="Téléphone"
+                        value={form.phone}
+                        onChange={(e) => handleChange('phone', e.target.value)}
+                    />
+                    <div className="flex gap-3 justify-center">
+                        <Button variant="primary" type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                        </Button>
+                        <Button variant="secondary" type="button" onClick={() => setIsEditing(false)}>
+                            Annuler
+                        </Button>
+                    </div>
+                    {error && <p className="font-body text-body-sm text-red-500">{JSON.stringify(error)}</p>}
+                </form>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col items-center gap-6 text-center">
             <h2 className="font-heading text-h2 text-noir-chaud">Informations personnelles</h2>
@@ -86,9 +150,8 @@ function InfosPersonnellesSection({ user }) {
                 </div>
             )}
             <button
-                disabled
-                className="px-6 py-3 rounded-lg border border-noir-chaud/30 font-body text-body text-brun-gris cursor-not-allowed"
-                title="Bientôt disponible"
+                onClick={() => setIsEditing(true)}
+                className="px-6 py-3 rounded-lg border border-noir-chaud font-body text-body text-noir-chaud"
             >
                 Modifier mes informations
             </button>
@@ -348,21 +411,23 @@ function AddressesSection() {
 export default function AccountPage() {
     const { logoutUser } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [user, setUser] = useState(null);
-    const [activeSection, setActiveSection] = useState('infos');
+    const [activeSection, setActiveSection] = useState(searchParams.get('section') || 'infos');
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        async function fetchMe() {
-            try {
-                const res = await apiClient.get('/me');
-                setUser(res.data);
-            } catch (err) {
-                console.error('Erreur lors du chargement du profil', err);
-            } finally {
-                setLoading(false);
-            }
+    async function fetchMe() {
+        try {
+            const res = await apiClient.get('/me');
+            setUser(res.data);
+        } catch (err) {
+            console.error('Erreur lors du chargement du profil', err);
+        } finally {
+            setLoading(false);
         }
+    }
+
+    useEffect(() => {
         fetchMe();
     }, []);
 
@@ -402,7 +467,9 @@ export default function AccountPage() {
                 <NavDesktop activeSection={activeSection} onSelect={handleSelectSection} />
 
                 <div className="flex-1">
-                    {activeSection === 'infos' && <InfosPersonnellesSection user={user} />}
+                    {activeSection === 'infos' && (
+                        <InfosPersonnellesSection user={user} onUpdated={fetchMe} />
+                    )}
                     {activeSection === 'orders' && <OrdersSection />}
                     {activeSection === 'addresses' && <AddressesSection />}
                 </div>

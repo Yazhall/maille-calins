@@ -23,6 +23,9 @@ import ConfidentialitePage from "./pages/ConfidentialitePage.jsx";
 import CookiesPage from "./pages/Cookiespage.jsx";
 import AdminReviewsRepliesPage from "./pages/AdminReviewsRepliesPage.jsx";
 import ProductReviewsPage from "./pages/ProductReviewsPage.jsx";
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+import VerifyEmailPage from './pages/VerifyEmailPage.jsx';
 function App() {
   return (
       <BrowserRouter>
@@ -30,6 +33,9 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage/>}/>
             <Route path="/cart" element={<CartPage/>}/>
@@ -50,6 +56,7 @@ function App() {
             <Route path="/admin/commandes" element={<AdminRoute> <AdminOrdersPage /> </AdminRoute>} />
             <Route path="/admin/avis" element={<AdminRoute> <AdminReviewsPage /> </AdminRoute>} />
             <Route path="/admin/avis/reponses" element={<AdminRoute> <AdminReviewsRepliesPage /> </AdminRoute>} />
+
         </Routes>
       </BrowserRouter>
   )

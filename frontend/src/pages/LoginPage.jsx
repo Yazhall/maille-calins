@@ -70,7 +70,7 @@ function LoginPage() {
                 </Button>
 
                 <div className="flex flex-col items-center gap-2 mt-1">
-                    <Link to="/mot-de-passe-oublie" className="font-body text-body-sm text-roux-principal">
+                    <Link to="/forgot-password" className="font-body text-body-sm text-roux-principal">
                         Mot de passe oublié ?
                     </Link>
                     <p className="font-body text-body-sm text-roux-principal">
