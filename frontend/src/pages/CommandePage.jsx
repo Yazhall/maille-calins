@@ -35,13 +35,12 @@ function AddressBlock({ address, user }) {
                     Aucune adresse enregistrée. Rendez-vous dans votre compte pour en ajouter une avant de commander.
                 </p>
             )}
-            <button
-                disabled
-                className="px-5 py-2 rounded-lg border border-noir-chaud/30 font-body text-body-sm text-brun-gris cursor-not-allowed"
-                title="La gestion des adresses arrive bientôt dans votre espace compte"
+            <Link
+                to="/account?section=addresses"
+                className="inline-block px-5 py-2 rounded-lg border border-noir-chaud font-body text-body-sm text-noir-chaud"
             >
                 Modifier
-            </button>
+            </Link>
         </div>
     );
 }
