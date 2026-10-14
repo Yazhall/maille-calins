@@ -1,0 +1,45 @@
+{
+	# Le HTTPS automatique est ACTIF (pas de "auto_https off") : Caddy obtient
+	# et renouvelle seul le certificat pour le nom de domaine ci-dessous.
+	# Optionnel : email {$ACME_EMAIL}
+
+	# Mode worker : volontairement désactivé pour l'instant (étape suivante).
+	# frankenphp {
+	#     worker /var/www/backend/public/index.php
+	# }
+	frankenphp
+}
+
+# Nom de domaine lu dans la variable d'environnement SERVER_NAME
+# (ex. SERVER_NAME=api.exemple.fr). Sans valeur : "localhost".
+{$SERVER_NAME:localhost} {
+	root * /var/www/backend/public
+
+	# Limite d'upload (équivalent de client_max_body_size de nginx)
+	request_body {
+		max_size 20MB
+	}
+
+	encode zstd gzip
+
+	# Ne pas révéler le serveur, et quelques en-têtes de sécurité de base.
+	# (HSTS à ajouter seulement une fois le HTTPS validé de bout en bout.)
+	header {
+		-Server
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# Aucune requête externe ne doit atteindre ni exécuter un fichier .php
+	# (ex. un .php déposé dans /uploads). php_server redirige lui-même
+	# les URL de l'API vers index.php, en interne.
+	@phpFiles path_regexp (?i)\.php
+
+	handle @phpFiles {
+		respond 404
+	}
+
+	handle {
+		php_server
+	}
+}
