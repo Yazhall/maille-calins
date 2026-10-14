@@ -5,6 +5,7 @@ services:
         build:
             context: ./backend
             dockerfile: Dockerfile
+            target: dev
         container_name: maille_php
         ports:
             - "8080:80"

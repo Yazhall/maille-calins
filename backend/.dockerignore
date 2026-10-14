@@ -1,0 +1,30 @@
+    # Git et éditeur
+    .git
+    .gitignore
+    .editorconfig
+
+    # Fichiers Docker eux-mêmes
+    Dockerfile
+    .dockerignore
+
+    # Secrets et configuration locale : jamais dans l'image
+    .env.local
+    .env.*.local
+    .env.local.php
+    .env.test
+    config/jwt/*.pem
+    .env.dev
+    # Reconstruits dans l'image
+    var/
+    vendor/
+    assets/vendor/
+    # Contenu utilisateur : fourni par un volume en production
+    public/uploads/*
+    config/secrets/*/*.decrypt.private.php
+    # Tests et outils de développement
+    tests/
+    phpunit.dist.xml
+    .phpunit.cache/
+
+    # Images de démonstration (utilisées uniquement par les fixtures)
+    assets/seed-images/
