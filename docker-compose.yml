@@ -1,26 +1,18 @@
 version: "3.9"
 
 services:
-    nginx:
-        image: nginx:alpine
-        container_name: maille_nginx
-        ports:
-            - "8080:80"
-        volumes:
-            - ./backend:/var/www/backend:ro
-            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-        depends_on:
-            - php
-        networks:
-            - maille_net
-
     php:
         build:
             context: ./backend
             dockerfile: Dockerfile
         container_name: maille_php
+        ports:
+            - "8080:80"
         volumes:
             - ./backend:/var/www/backend
+            - ./docker/caddy/Caddyfile:/etc/frankenphp/Caddyfile:ro
+            - caddy_data:/data
+            - caddy_config:/config
         environment:
             DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8"
             MONGODB_URI: "mongodb://mongo:27017"
@@ -109,6 +101,8 @@ services:
 volumes:
     pgdata:
     mongodata:
+    caddy_data:
+    caddy_config:
 
 networks:
     maille_net:

@@ -1,0 +1,37 @@
+{
+	# Dev : pas de HTTPS automatique, on reste sur http://localhost:8080
+	auto_https off
+
+	# Mode worker désactivé en dev (chaque requête reboote le kernel, comme avec FPM).
+	# Pour l'activer plus tard (prod) :
+	# frankenphp {
+	#     worker /var/www/backend/public/index.php
+	# }
+	frankenphp
+}
+
+:80 {
+	root * /var/www/backend/public
+
+	# Équivalent de client_max_body_size 20M de nginx
+	request_body {
+		max_size 20MB
+	}
+
+	encode zstd gzip
+
+	# Équivalent du "location ~ \.php$ { return 404; }" de nginx :
+	# aucune requête externe ne doit pouvoir atteindre ni exécuter un fichier .php
+	# (ex. un .php déposé dans /uploads). Les URL de l'API (/api/...) ne sont pas
+	# concernées : php_server les redirige lui-même en interne vers index.php.
+	@phpFiles path_regexp (?i)\.php
+
+	handle @phpFiles {
+		respond 404
+	}
+
+	# Sert les fichiers statiques de public/ (dont /uploads) et renvoie le reste vers index.php
+	handle {
+		php_server
+	}
+}
