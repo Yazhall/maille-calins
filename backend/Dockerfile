@@ -1,22 +1,20 @@
-FROM php:8.4-fpm-alpine
+FROM dunglas/frankenphp:1-php8.4-alpine
 
-# Dépendances système + extensions PHP
-RUN apk add --no-cache \
-    icu-dev \
-    libzip-dev \
-    postgresql-dev \
-    git \
-    unzip \
-    autoconf \
-    g++ \
-    make \
-    && docker-php-ext-install pdo pdo_pgsql intl zip opcache \
-    && pecl install mongodb \
-    && docker-php-ext-enable mongodb
+# Extensions PHP (install-php-extensions est fourni par l'image FrankenPHP)
+RUN install-php-extensions \
+    pdo_pgsql \
+    intl \
+    zip \
+    opcache \
+    mongodb
+
+# Outils utilisés par Composer
+RUN apk add --no-cache git unzip
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# On garde le même chemin que l'ancienne image php-fpm (Makefile, chmod, etc.)
 WORKDIR /var/www/backend
 
 # php.ini dev (à adapter en prod)
@@ -27,6 +25,5 @@ RUN { \
     echo "display_errors=1"; \
   } > /usr/local/etc/php/conf.d/dev.ini
 
-EXPOSE 9000
-
-CMD ["php-fpm"]
+# Le Caddyfile est monté depuis docker/caddy/Caddyfile (voir docker-compose.yml)
+EXPOSE 80
