@@ -109,7 +109,7 @@ readonly class OrderService
     }
     public function listAllOrders(): array
     {
-        return $this->orderRepository->findBy([],['createdAt'=>'ASC']);
+        return $this->orderRepository->findBy([],['createdAt'=>'DESC']);
 
 
     }
