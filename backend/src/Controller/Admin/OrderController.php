@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 use App\Entity\Order;
+use App\Entity\OrderItem;
 use App\Service\OrderService;
 use App\Dto\UpdateOrderStatusDto;
 use InvalidArgumentException;
@@ -38,6 +39,23 @@ class OrderController extends AbstractController
             'orderNumber' => $order->getOrderNumber(),
             'totalAmount' => $order->getTotalAmount(),
             'createdAt' => $order->getCreatedAt()->format('Y-m-d H:i:s'),
+            'customer' => [
+                'firstName' => $order->getCustomer()?->getFirstName(),
+                'lastName' => $order->getCustomer()?->getLastName(),
+                'email' => $order->getCustomer()?->getEmail(),
+            ],
+            'shippingAddress' => [
+                'street'=>$order->getShippingAddress()?->getStreet(),
+                'postalCode'=> $order->getShippingAddress()?->getPostalCode(),
+                'city' =>$order->getShippingAddress()?->getCity(),
+                'country'=>$order->getShippingAddress()?->getCountry(),
+            ],
+            'items' => array_map(fn(OrderItem $item) => [
+                'productId' => $item->getProductId(),
+                'name'      => $item->getProductNameSnapshot(),
+                'quantity'  => $item->getQuantity(),
+                'price'     => $item->getProductPriceSnapshot(),
+            ], $order->getOrderItems()->toArray()),
         ];
     }
 
