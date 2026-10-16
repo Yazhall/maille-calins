@@ -40,8 +40,8 @@ readonly class OrderService
         if ($items->isEmpty()){
             throw new InvalidArgumentException('Cart is empty');
         }
-        $billingAddress = $this->resolveAddress($user,$billingAddressId);
-        $shippingAddress = $this->resolveAddress($user,$shippingAddressId);
+        $billingAddress = $this->resolveAddress($user,$billingAddressId, ['billing', 'both']);
+        $shippingAddress = $this->resolveAddress($user,$shippingAddressId, ['shipping', 'both']);
 
         $order = new Order();
         $order->setCreatedAt(new DateTimeImmutable());
@@ -84,9 +84,9 @@ readonly class OrderService
         return $order;
         });
     }
-    private function resolveAddress (User $user, ?string $addressId): Address
+    private function resolveAddress (User $user, ?string $addressId, array $accepted ): Address
     {
-        if ($addressId !== null){
+        if ($addressId !== null ){
             $currentAddress =$this->addressService->getAddress($user,$addressId);
 
         }else{
@@ -95,6 +95,9 @@ readonly class OrderService
 
         if ($currentAddress === null){
             throw new InvalidArgumentException('Aucune address enregister');
+        }
+        if (!in_array($currentAddress->getType(),$accepted, true)){
+            throw new InvalidArgumentException("Cette adresse ne peut pas être utilisée ici (type : {$currentAddress->getType()})");
         }
         return $currentAddress;
     }

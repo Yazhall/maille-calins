@@ -69,6 +69,21 @@ class OrderServiceTest extends TestCase
             $this->orderRepository,
         );
     }
+    private function makeAddressStub(string $type): Address
+    {
+        $address = $this->createStub(Address::class);
+        $address->method('getType')->willReturn($type);
+        return $address;
+    }
+
+    private function makeCartWithOneItem(): void
+    {
+        $cart = $this->createStub(Cart::class);
+        $cart->method('getCartItems')->willReturn(
+            new ArrayCollection([$this->makeCartItem('prod-1', 2)])
+        );
+        $this->cartService->method('getOrCreateCart')->willReturn($cart);
+    }
 
     private function makeCartItem(string $productId, int $quantity): CartItem
     {
@@ -112,26 +127,27 @@ class OrderServiceTest extends TestCase
      * Vérifie que createOrder() rejette la commande si un produit présent dans
      * le panier n'existe plus (findById renvoie null), avant tout calcul de total.
      */
-    public function testCreateOrderThrowsWhenProductNotFound(): void
-    {
-        $user = $this->createStub(User::class);
-        $address = $this->createStub(Address::class);
-        $cartItem = $this->makeCartItem('prod-1', 2);
+        public function testCreateOrderThrowsWhenProductNotFound(): void
+        {
+            $user = $this->createStub(User::class);
+            $address = $this->createStub(Address::class);
+            $address->method('getType')->willReturn('both');
+            $cartItem = $this->makeCartItem('prod-1', 2);
 
-        $cart = $this->createStub(Cart::class);
-        $cart->method('getCartItems')->willReturn(new ArrayCollection([$cartItem]));
+            $cart = $this->createStub(Cart::class);
+            $cart->method('getCartItems')->willReturn(new ArrayCollection([$cartItem]));
 
-        $this->cartService->method('getOrCreateCart')->willReturn($cart);
-        $this->addressService->method('findDefaultAddress')->willReturn($address);
-        $this->productService->method('findById')->willReturn(null);
+            $this->cartService->method('getOrCreateCart')->willReturn($cart);
+            $this->addressService->method('findDefaultAddress')->willReturn($address);
+            $this->productService->method('findById')->willReturn(null);
 
-        try {
-            $this->orderService->createOrder($user, null, null);
-            $this->fail('InvalidArgumentException attendue non levée.');
-        } catch (InvalidArgumentException $e) {
-            $this->assertSame('produit introuvable', $e->getMessage());
+            try {
+                $this->orderService->createOrder($user, null, null);
+                $this->fail('InvalidArgumentException attendue non levée.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame('produit introuvable', $e->getMessage());
+            }
         }
-    }
 
     /**
      * Vérifie que createOrder() rejette la commande quand la quantité demandée
@@ -141,6 +157,7 @@ class OrderServiceTest extends TestCase
     {
         $user = $this->createStub(User::class);
         $address = $this->createStub(Address::class);
+        $address->method('getType')->willReturn('both');
         $cartItem = $this->makeCartItem('prod-1', 5);
         $product = $this->makeProductStub('prod-1', 'Lapin en laine', 19.90, 2);
 
@@ -196,6 +213,7 @@ class OrderServiceTest extends TestCase
     {
         $user = $this->createStub(User::class);
         $address = $this->createStub(Address::class);
+        $address->method('getType')->willReturn('both');
         $cartItem = $this->makeCartItem('prod-1', 2);
 
         /** @var Product&MockObject $product */
@@ -294,5 +312,72 @@ class OrderServiceTest extends TestCase
 
         $this->assertTrue($this->orderService->hasUserPurchasedProduct($user, 'prod-42'));
         $this->assertFalse($this->orderService->hasUserPurchasedProduct($user, 'prod-99'));
+    }
+
+    public function testCreateOrderRejectsBillingAddressUsedAsShipping(): void
+    {
+        $user = $this->createStub(User::class);
+        $this->makeCartWithOneItem();
+
+        $billingOnly = $this->makeAddressStub('billing');
+        $this->addressService->method('getAddress')->willReturn($billingOnly);
+
+        try {
+            $this->orderService->createOrder($user, 'ship-id', 'bill-id');
+            $this->fail('InvalidArgumentException attendue non levée.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame('Cette adresse ne peut pas être utilisée ici (type : billing)', $e->getMessage());
+        }
+    }
+
+    public function testCreateOrderRejectsShippingAddressUsedAsBilling(): void
+    {
+        $user = $this->createStub(User::class);
+        $this->makeCartWithOneItem();
+
+        $shippingOnly = $this->makeAddressStub('shipping');
+        $this->addressService->method('getAddress')->willReturn($shippingOnly);
+
+        try {
+            $this->orderService->createOrder($user, 'ship-id', 'bill-id');
+            $this->fail('InvalidArgumentException attendue non levée.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame('Cette adresse ne peut pas être utilisée ici (type : shipping)', $e->getMessage());
+        }
+    }
+
+    public function testCreateOrderUsesExplicitAddressIdsInsteadOfDefault(): void
+    {
+        $user = $this->createStub(User::class);
+        $address = $this->makeAddressStub('both');
+
+        /** @var AddressService&MockObject $addressService */
+        $addressService = $this->createMock(AddressService::class);
+        $addressService->expects($this->never())->method('findDefaultAddress');
+        $addressService->expects($this->exactly(2))
+            ->method('getAddress')
+            ->willReturnCallback(function (User $u, string $id) use ($address) {
+                $this->assertContains($id, ['ship-id', 'bill-id']);
+                return $address;
+            });
+
+        $this->makeCartWithOneItem();
+        $this->productService->method('findById')
+            ->willReturn($this->makeProductStub('prod-1', 'Lapin en laine', 19.90, 5));
+
+        $orderService = new OrderService(
+            $this->entityManager,
+            $this->documentManager,
+            $addressService,
+            $this->cartService,
+            $this->productService,
+            $this->paymentService,
+            $this->orderRepository,
+        );
+
+        $order = $orderService->createOrder($user, 'ship-id', 'bill-id');
+
+        $this->assertSame($address, $order->getShippingAddress());
+        $this->assertSame($address, $order->getBillingAddress());
     }
 }
