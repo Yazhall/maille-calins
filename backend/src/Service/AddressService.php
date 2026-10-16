@@ -26,7 +26,7 @@ readonly class AddressService
         return $address;
     }
     public function createAddress(User $user, CreateAddressDto $dto): Address{
-        $existingAddress = $this->addressRepository->findBy(['owner'=>$user]);
+        $existingAddress = $this->addressRepository->findBy(['owner'=>$user, 'isActive'=>true]);
         $isFirstAddress = count($existingAddress) === 0;
         $address = new Address();
         $address->setIsActive(true);
@@ -62,18 +62,19 @@ readonly class AddressService
        $address = $this->findOwnedAddressOrFail($user, $addressId);
 
        $address->setIsActive(false);
+       $address->setIsDefault(false);
        $this->entityManager->flush();
     }
 
     public function findDefaultAddress(User $user): ?Address{
 
-        return $this->addressRepository->findOneBy(['owner'=>$user, 'isDefault'=>true]);
+        return $this->addressRepository->findOneBy(['owner'=>$user, 'isDefault'=>true, 'isActive'=>true] );
 
     }
 
     private function findOwnedAddressOrFail(User $user, string $addressId): Address
     {
-        $address = $this->addressRepository->findOneBy(['id' => $addressId, 'owner' => $user]);
+        $address = $this->addressRepository->findOneBy(['id' => $addressId, 'owner' => $user, 'isActive' => true]);
 
         if ($address === null) {
             throw new InvalidArgumentException('Cette Address n\'existe pas');

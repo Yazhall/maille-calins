@@ -9,6 +9,15 @@ import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 import Button from '../components/Button.jsx';
 
+const SHIPPING_TYPES = ['shipping', 'both'];
+const BILLING_TYPES = ['billing', 'both'];
+
+function pickInitial(addresses, allowedTypes) {
+    const eligible = addresses.filter((a) => allowedTypes.includes(a.type));
+    const initial = eligible.find((a) => a.isDefault) || eligible[0] || null;
+    return initial ? initial.id : null;
+}
+
 function AnnounceBar() {
     return (
         <div className="bg-noir-chaud text-blanc text-center py-2 px-4">
@@ -17,30 +26,59 @@ function AnnounceBar() {
     );
 }
 
-function AddressBlock({ address, user }) {
+function AddressList({ title, name, addresses, selectedId, onSelect, user, emptyMessage }) {
     return (
-        <div className="bg-creme rounded-xl p-6 text-center">
-            <p className="font-body text-body-sm text-brun-gris mb-1">Adresse de livraison</p>
-            {address ? (
-                <>
-                    <p className="font-body text-body font-medium text-noir-chaud">
-                        {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="font-body text-body-sm text-brun-gris mb-4">
-                        {address.street}, {address.postalCode} {address.city}
-                    </p>
-                </>
+        <div className="bg-creme rounded-xl p-6">
+            <p className="font-body text-body-sm text-brun-gris mb-3 text-center">{title}</p>
+            {addresses.length > 0 ? (
+                <fieldset className="flex flex-col gap-3">
+                    <legend className="sr-only">{title}</legend>
+                    {addresses.map((address) => {
+                        const isSelected = address.id === selectedId;
+                        return (
+                            <label
+                                key={address.id}
+                                className={`flex items-start gap-3 rounded-lg px-4 py-3 cursor-pointer bg-blanc border ${
+                                    isSelected ? 'border-noir-chaud' : 'border-brun-gris/30'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name={name}
+                                    value={address.id}
+                                    checked={isSelected}
+                                    onChange={() => onSelect(address.id)}
+                                    className="mt-1 accent-noir-chaud"
+                                />
+                                <span className="flex flex-col">
+                                    <span className="font-body text-body font-medium text-noir-chaud">
+                                        {user?.firstName} {user?.lastName}
+                                        {address.isDefault && (
+                                            <span className="ml-2 font-body text-body-sm text-vert-sauge">
+                                                Par défaut
+                                            </span>
+                                        )}
+                                    </span>
+                                    <span className="font-body text-body-sm text-brun-gris">
+                                        {address.street}, {address.postalCode} {address.city}
+                                    </span>
+                                    <span className="font-body text-body-sm text-brun-gris">{address.country}</span>
+                                </span>
+                            </label>
+                        );
+                    })}
+                </fieldset>
             ) : (
-                <p className="font-body text-body-sm text-red-500 mb-4">
-                    Aucune adresse enregistrée. Rendez-vous dans votre compte pour en ajouter une avant de commander.
-                </p>
+                <p className="font-body text-body-sm text-red-500 text-center">{emptyMessage}</p>
             )}
-            <Link
-                to="/account?section=addresses"
-                className="inline-block px-5 py-2 rounded-lg border border-noir-chaud font-body text-body-sm text-noir-chaud"
-            >
-                Modifier
-            </Link>
+            <div className="text-center mt-4">
+                <Link
+                    to="/account?section=addresses"
+                    className="inline-block px-5 py-2 rounded-lg border border-noir-chaud font-body text-body-sm text-noir-chaud"
+                >
+                    Gérer mes adresses
+                </Link>
+            </div>
         </div>
     );
 }
@@ -161,7 +199,10 @@ export default function CommandePage() {
     const navigate = useNavigate();
 
     const [products, setProducts] = useState({});
-    const [defaultAddress, setDefaultAddress] = useState(null);
+    const [addresses, setAddresses] = useState([]);
+    const [shippingAddressId, setShippingAddressId] = useState(null);
+    const [billingAddressId, setBillingAddressId] = useState(null);
+    const [sameAsShipping, setSameAsShipping] = useState(true);
     const [user, setUser] = useState(null);
     const [error, setError] = useState(null);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -174,8 +215,10 @@ export default function CommandePage() {
                     apiClient.get('/addresses'),
                     apiClient.get('/me'),
                 ]);
-                const addresses = addressesRes.data;
-                setDefaultAddress(addresses.find((a) => a.isDefault) || addresses[0] || null);
+                const list = addressesRes.data;
+                setAddresses(list);
+                setShippingAddressId(pickInitial(list, SHIPPING_TYPES));
+                setBillingAddressId(pickInitial(list, BILLING_TYPES));
                 setUser(meRes.data);
             } catch (err) {
                 console.error('Erreur lors du chargement des données de commande', err);
@@ -223,11 +266,19 @@ export default function CommandePage() {
         return sum + (product ? product.price * item.quantity : 0);
     }, 0);
 
+    const shippingAddresses = addresses.filter((a) => SHIPPING_TYPES.includes(a.type));
+    const billingAddresses = addresses.filter((a) => BILLING_TYPES.includes(a.type));
+    const selectedShipping = addresses.find((a) => a.id === shippingAddressId) || null;
+    // "Même adresse" n'est possible que si l'adresse de livraison choisie sert aussi à la facturation
+    const canReuseForBilling = selectedShipping?.type === 'both';
+    const useSameForBilling = canReuseForBilling && sameAsShipping;
+    const effectiveBillingId = useSameForBilling ? shippingAddressId : billingAddressId;
+
     async function handleConfirmOrder() {
         setError(null);
         setIsPlacingOrder(true);
         try {
-            const order = await createOrder(null, null);
+            const order = await createOrder(shippingAddressId, effectiveBillingId);
             await refreshCart();
             navigate(`/orders/${order.id}`);
         } catch (err) {
@@ -258,7 +309,37 @@ export default function CommandePage() {
             ) : (
                 <div className="px-4 md:px-16 pb-12 flex flex-col md:flex-row gap-8 md:gap-10">
                     <div className="flex-1 flex flex-col gap-8">
-                        <AddressBlock address={defaultAddress} user={user} />
+                        <AddressList
+                            title="Adresse de livraison"
+                            name="shippingAddress"
+                            addresses={shippingAddresses}
+                            selectedId={shippingAddressId}
+                            onSelect={setShippingAddressId}
+                            user={user}
+                            emptyMessage="Aucune adresse de livraison enregistrée. Rendez-vous dans votre compte pour en ajouter une avant de commander."
+                        />
+                        {canReuseForBilling && (
+                            <label className="flex items-center justify-center gap-2 font-body text-body-sm text-noir-chaud cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={sameAsShipping}
+                                    onChange={(e) => setSameAsShipping(e.target.checked)}
+                                    className="accent-noir-chaud"
+                                />
+                                Utiliser la même adresse pour la facturation
+                            </label>
+                        )}
+                        {!useSameForBilling && (
+                            <AddressList
+                                title="Adresse de facturation"
+                                name="billingAddress"
+                                addresses={billingAddresses}
+                                selectedId={billingAddressId}
+                                onSelect={setBillingAddressId}
+                                user={user}
+                                emptyMessage="Aucune adresse de facturation enregistrée. Ajoutez-en une dans votre compte (type « facturation » ou « les deux »)."
+                            />
+                        )}
                         <DeliveryOptions />
                         <PaymentForm />
                     </div>
@@ -271,7 +352,7 @@ export default function CommandePage() {
                             onConfirm={handleConfirmOrder}
                             isPlacingOrder={isPlacingOrder}
                             error={error}
-                            disabled={!defaultAddress}
+                            disabled={!shippingAddressId || !effectiveBillingId}
                         />
                     </div>
                 </div>
